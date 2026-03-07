@@ -1,0 +1,154 @@
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import * as schema from "./schema";
+import path from "path";
+import fs from "fs";
+
+const dbPath = process.env.DATABASE_PATH || "./data/dutlok.db";
+const resolvedPath = path.resolve(dbPath);
+const dir = path.dirname(resolvedPath);
+if (!fs.existsSync(dir)) {
+  fs.mkdirSync(dir, { recursive: true });
+}
+
+const sqlite = new Database(resolvedPath);
+sqlite.pragma("journal_mode = WAL");
+sqlite.pragma("foreign_keys = ON");
+
+const db = drizzle(sqlite, { schema });
+
+// Create tables
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS guild_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    discord_tag TEXT,
+    notes TEXT,
+    is_officer INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS characters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER REFERENCES guild_members(id) ON DELETE SET NULL,
+    name TEXT NOT NULL,
+    realm TEXT NOT NULL,
+    realm_slug TEXT NOT NULL,
+    region TEXT NOT NULL DEFAULT 'us',
+    faction TEXT,
+    race TEXT,
+    class_name TEXT,
+    active_spec TEXT,
+    role TEXT,
+    level INTEGER,
+    item_level INTEGER,
+    equipped_item_level INTEGER,
+    guild_rank INTEGER,
+    guild_rank_name TEXT,
+    avatar_url TEXT,
+    render_url TEXT,
+    profile_url TEXT,
+    is_main INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    raid_team TEXT,
+    last_synced_at TEXT,
+    blizzard_id INTEGER,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS char_name_realm_region ON characters(name, realm_slug, region);
+
+  CREATE TABLE IF NOT EXISTS character_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    strength INTEGER,
+    agility INTEGER,
+    intellect INTEGER,
+    stamina INTEGER,
+    critical_strike REAL,
+    haste REAL,
+    mastery REAL,
+    versatility REAL,
+    professions TEXT,
+    talents TEXT,
+    equipment TEXT,
+    encounters TEXT,
+    mythic_plus_season TEXT,
+    mythic_plus_rating REAL,
+    pvp_rating INTEGER,
+    raw_profile_data TEXT,
+    snapshot_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS sync_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_type TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    target_character_id INTEGER REFERENCES characters(id),
+    total_characters INTEGER DEFAULT 0,
+    processed_characters INTEGER DEFAULT 0,
+    failed_characters INTEGER DEFAULT 0,
+    error_log TEXT,
+    started_at TEXT,
+    completed_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS raid_teams (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS raid_loot (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_id INTEGER REFERENCES characters(id) ON DELETE SET NULL,
+    character_name TEXT NOT NULL,
+    item_name TEXT NOT NULL,
+    item_id INTEGER,
+    item_quality TEXT,
+    item_level INTEGER,
+    boss_name TEXT,
+    raid_name TEXT,
+    raid_date TEXT NOT NULL,
+    notes TEXT,
+    awarded_by TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS registrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_name TEXT NOT NULL,
+    realm_slug TEXT NOT NULL,
+    region TEXT NOT NULL DEFAULT 'us',
+    submitted_by TEXT,
+    notes TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    reviewed_by TEXT,
+    reviewed_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action TEXT NOT NULL,
+    entity_type TEXT,
+    entity_id INTEGER,
+    details TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+console.log("Database tables created successfully.");
+console.log(`Database location: ${resolvedPath}`);

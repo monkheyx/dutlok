@@ -1,0 +1,474 @@
+I want you to help me design and build a private web application inspired by murlok.io, but only for my World of Warcraft guild.
+
+This is NOT intended to be a public large-scale commercial site. It is for a single guild/community, so the system should be designed to be maintainable, reasonably fast, and practical rather than massively over-engineered. However, I still want it built in a professional way with clean architecture, strong organization, and room for future expansion.
+
+Your job is to act as a senior full-stack architect and engineer. You are allowed to choose the codebase, framework, database, project structure, libraries, and implementation approach that best fits the requirements. Do not lock yourself into a stack too early if a better option emerges after analysis.
+
+You should first analyze the project goals and then propose the best architecture, data model, and implementation plan before building. After the plan is approved internally by your own reasoning, begin implementation in a structured way.
+
+The finished project should resemble the general usefulness of murlok.io, but tailored specifically to my guild, our characters, our activities, and our needs.
+
+==================================================
+CORE PROJECT GOAL
+==================================================
+
+Build a guild-focused World of Warcraft roster and build-analysis platform that:
+
+1. Tracks guild members and their characters.
+2. Pulls relevant character/build/profile data from Blizzard APIs or other appropriate official/allowed data sources.
+3. Displays useful information about guild members in a clear dashboard.
+4. Lets us analyze specs, builds, gear, performance-related choices, and guild composition.
+5. Supports guild-specific views instead of public ladder-wide aggregation.
+6. Is easy for our guild leadership/admins to manage.
+7. Can grow over time if we later want more features.
+
+This should feel like a polished internal guild tool, not just a rough script.
+
+==================================================
+HIGH-LEVEL PRODUCT VISION
+==================================================
+
+I want a site/app where guild members or guild leadership can:
+
+- View the guild roster.
+- See each character’s class, spec, role, faction, realm, item level, professions if available, PvE/PvP focus, and recent updates.
+- View details for a specific character:
+  - talents/builds
+  - gear summary
+  - embellishments / enchants / gems if available
+  - specialization
+  - stats/secondary distribution if available
+  - raid / mythic+ / pvp relevance depending on what data is accessible
+- Filter the roster by:
+  - class
+  - spec
+  - role
+  - active/inactive
+  - main vs alt
+  - raid team/group
+- Mark or infer “main” characters vs alts.
+- See guild composition summaries:
+  - tanks / healers / dps
+  - melee vs ranged
+  - class/spec breakdown
+  - armor type distribution
+  - profession coverage
+- Potentially identify weak coverage or missing utility in guild composition.
+- Show recent changes or refreshes for characters.
+- Optionally provide comparisons between guild members using the same spec.
+- Optionally surface “recommended common patterns” from within our own guild data, or optionally from a broader reference source later if we choose.
+
+Important:
+This is for my guild, not the entire WoW player base, so the system should prioritize guild usefulness and data accuracy over giant-scale scraping.
+
+==================================================
+IMPORTANT IMPLEMENTATION PHILOSOPHY
+==================================================
+
+You have freedom to choose the best technical solution.
+
+You may choose:
+- frontend framework
+- backend framework
+- database
+- ORM/query layer
+- hosting model
+- auth approach
+- caching strategy
+- job scheduling approach
+- API design
+- admin UI approach
+
+But your choices must be justified by:
+- maintainability
+- simplicity
+- reliability
+- ease of future updates
+- ability to ingest Blizzard data
+- suitability for a guild-sized app
+
+Do not pick technologies just because they are trendy. Pick what is practical and stable.
+
+If a lightweight solution is enough, use it.
+If a relational database is better than NoSQL here, use relational.
+If server-rendered pages are better than a giant SPA, use that.
+If background jobs are needed for sync/refresh, include them.
+If caching is needed to avoid unnecessary API calls, design that in.
+
+==================================================
+PRIMARY REQUIREMENTS
+==================================================
+
+The application should support these core areas:
+
+1. Guild Roster
+- Store guild members and associated characters.
+- Support one member having multiple characters.
+- Allow designation of main/alt.
+- Show character status and summary data.
+- Allow manual corrections if Blizzard data is incomplete or if guild-specific labels are needed.
+
+2. Character Profiles
+For each character, try to collect and display as much of the following as is reasonably available:
+- character name
+- realm
+- region
+- faction
+- race
+- class
+- active spec
+- role
+- level
+- item level
+- talents/build import or talent summary
+- gear summary
+- stats / secondary stats if available
+- profession data if available
+- guild rank if available
+- recent update timestamp
+- avatar/render if available
+
+3. Data Sync
+- Pull data from Blizzard APIs or other official/permitted sources where appropriate.
+- Build a sync process for:
+  - initial guild import
+  - refreshing all guild members
+  - refreshing a single character
+  - periodic scheduled updates
+- Respect rate limits and use caching.
+- Log sync results and failures.
+- Build retry logic for transient failures.
+
+4. Admin Controls
+- Admins should be able to:
+  - add/remove characters
+  - map characters to guild members
+  - mark main vs alt
+  - flag active vs inactive
+  - trigger refresh/sync
+  - edit guild-specific metadata
+- Admin should be simple and reliable.
+- It does not need to be over-designed, but it should be functional and secure.
+
+5. Guild Analytics
+Provide dashboard-level views such as:
+- total members
+- active characters
+- class/spec distribution
+- role distribution
+- mains vs alts
+- profession coverage
+- raid composition summaries
+- optional comparison pages for same-spec characters
+- optional “who can fill what role” views
+
+6. Search / Filtering / Sorting
+- Search by character name
+- Filter by class/spec/role/main-alt/activity/team
+- Sort by name, ilvl, recently updated, class, role, etc.
+
+==================================================
+OPTIONAL / NICE-TO-HAVE FEATURES
+==================================================
+
+If practical, design the project so these could be added later without major rewrites:
+
+- guild login / member accounts
+- Blizzard OAuth login
+- Discord integration for linking member identities
+- attendance or raid team assignment
+- notes for officers
+- recruitment board
+- simple progression tracking
+- historical snapshots of character changes
+- compare two characters side-by-side
+- track changes in talents/gear over time
+- export roster to CSV
+- mobile-friendly design
+- dark/light mode
+- notification system for stale characters or missing updates
+
+Do not let nice-to-have items overcomplicate the first version, but leave room for them.
+
+==================================================
+DATA SOURCES / INTEGRATION EXPECTATIONS
+==================================================
+
+Use official/allowed data sources whenever possible.
+
+Primary likely source:
+- Blizzard Battle.net / World of Warcraft APIs
+
+Potential secondary sources only if truly appropriate and legally/technically acceptable:
+- Raider.IO-style public data only if allowed and useful
+- Warcraft Logs integration later if we decide to support it
+- Static game data sources for class/spec metadata if needed
+
+Important rules:
+- Do not build the system around scraping random websites if official APIs exist.
+- Prefer stable APIs and documented integrations.
+- If some desired data is not available from official sources, design the system so that field can be omitted, approximated, or manually supplemented.
+- Be honest in the code and documentation about what is authoritative vs inferred vs manually entered.
+
+==================================================
+ARCHITECTURE EXPECTATIONS
+==================================================
+
+Before implementing, produce:
+
+1. A recommended architecture
+2. A reasoning section for why that stack was chosen
+3. A database design / schema plan
+4. A sync/data ingestion plan
+5. A caching/rate limit handling plan
+6. A security/auth plan
+7. A phased implementation roadmap
+
+Then start building in phases.
+
+You should choose a clean project structure. For example, something like:
+- frontend/
+- backend/
+- shared/
+- workers/
+- infra/
+- docs/
+
+Or a monorepo if that is the better fit.
+
+==================================================
+DATABASE EXPECTATIONS
+==================================================
+
+Choose the database type that fits best.
+
+The database should likely support entities such as:
+- guild_members
+- characters
+- character_profiles
+- gear_snapshots
+- talent_snapshots
+- sync_jobs
+- refresh_logs
+- guild_teams / raid_groups
+- user_accounts if auth is included
+- admin_notes or guild_metadata if useful
+
+If relational fits best, use relational and normalize sensibly.
+If some JSON fields make more sense for API payload storage, that is acceptable.
+Balance flexibility and clarity.
+
+You should define:
+- tables/models
+- relationships
+- indexes
+- uniqueness constraints
+- timestamps
+- soft delete strategy if appropriate
+- historical snapshot strategy if implemented
+
+==================================================
+UI / UX EXPECTATIONS
+==================================================
+
+The UI should be clean, modern, and practical.
+
+Priorities:
+- easy to scan
+- desktop-first but responsive
+- fast loading
+- clear navigation
+- useful filtering
+- character pages that feel informative without being cluttered
+
+Possible pages:
+- Dashboard
+- Guild Roster
+- Character Detail
+- Composition / Analytics
+- Admin / Settings
+- Sync Status / Logs
+
+Design goals:
+- polished but not flashy
+- modern WoW-adjacent feel without being cheesy
+- readable typography
+- logical cards/tables/filters
+- clear class/spec display
+- strong usability for guild officers
+
+==================================================
+SECURITY / AUTH / PRIVACY
+==================================================
+
+This is a private guild tool, so privacy matters.
+
+Please design for:
+- admin-only actions protection
+- safe storage of API credentials and secrets
+- role-based permissions if needed
+- input validation
+- rate limiting where appropriate
+- basic audit trail for admin changes if practical
+- secure handling of OAuth tokens if login integration is used
+
+If authentication is not necessary in v1, still structure the project so it can be added later cleanly.
+
+==================================================
+PERFORMANCE / OPERATIONS
+==================================================
+
+The project should be practical to deploy and maintain.
+
+Please include:
+- environment variable strategy
+- local development instructions
+- seed/bootstrap flow
+- migration strategy
+- logging approach
+- background jobs or cron approach for refreshes
+- error handling patterns
+- basic observability suggestions
+
+Prefer a deployment approach that is realistic for a small internal tool.
+
+==================================================
+CODING EXPECTATIONS
+==================================================
+
+Please build this as if it were a real maintainable product.
+
+Requirements:
+- clean, readable code
+- strong naming conventions
+- modular architecture
+- comments where useful, not everywhere
+- avoid overengineering
+- avoid fragile hacks
+- create documentation as you go
+- add TODO markers only when truly necessary
+- build reusable components where appropriate
+- keep business logic out of UI where possible
+
+If tests are appropriate, include them for critical areas:
+- sync/parsing
+- data mapping
+- API endpoints
+- permissions
+- core business logic
+
+==================================================
+WORKFLOW INSTRUCTIONS
+==================================================
+
+Follow this workflow:
+
+PHASE 1: Discovery and Technical Design
+- Analyze the project requirements.
+- Identify what data is realistically obtainable.
+- Recommend a stack.
+- Recommend the database and data model.
+- Recommend the sync architecture.
+- List assumptions and unknowns clearly.
+- Produce a detailed build plan.
+
+PHASE 2: Scaffold the Project
+- Create the initial project structure.
+- Set up the chosen frontend/backend/database foundation.
+- Configure environment examples.
+- Add base documentation.
+
+PHASE 3: Implement Core Data Layer
+- Create schema/models/migrations.
+- Implement Blizzard API client/service layer.
+- Implement sync jobs and refresh logic.
+- Add logging/error handling.
+
+PHASE 4: Implement Core UI
+- Build dashboard
+- Build roster page
+- Build character detail page
+- Build admin pages
+- Add filtering/search/sorting
+
+PHASE 5: Analytics / Composition
+- Add guild composition summaries
+- Add role/class/spec breakdowns
+- Add comparison utilities if practical
+
+PHASE 6: Hardening
+- Improve auth/security
+- Improve performance
+- Add tests
+- Clean up docs
+- Prepare deployment notes
+
+==================================================
+DECISION-MAKING RULES
+==================================================
+
+When making implementation decisions:
+- Prefer maintainability over novelty.
+- Prefer simple over clever.
+- Prefer official APIs over scraping.
+- Prefer schema clarity over excessive flexibility.
+- Prefer server truth over UI-only assumptions.
+- Prefer guild usefulness over perfect completeness.
+
+If some data cannot be obtained reliably, design the UX gracefully around that limitation.
+
+==================================================
+DELIVERABLES I EXPECT FROM YOU
+==================================================
+
+I want you to produce, in order:
+
+1. A technical recommendation document
+2. A proposed stack with justification
+3. A schema/data model proposal
+4. A feature breakdown into MVP vs future enhancements
+5. A detailed implementation plan
+6. Then begin building the codebase
+
+As you proceed, keep a running project log in markdown so progress is documented.
+
+==================================================
+IMPORTANT FINAL INSTRUCTION
+==================================================
+
+Do not make the mistake of trying to clone murlok.io exactly. Instead, use it as inspiration for:
+- guild roster visibility
+- character/build summaries
+- useful filtering and composition views
+- practical data refreshes
+
+But adapt everything for the smaller, guild-specific use case.
+
+You have permission to choose the best implementation path and to revise the architecture if a better practical approach becomes clear during the build, as long as you document why.
+
+Start by producing the discovery/design output first, then proceed into scaffolding and implementation.
+
+
+A few practical preferences:
+
+- Keep the first version focused and achievable.
+- Do not overbuild for enterprise scale.
+- Choose a stack that is realistic to deploy and maintain.
+- If multiple good stack options exist, prefer the one with the best long-term maintainability and easiest development workflow.
+- I care more about a stable useful tool than the “perfect” tech stack.
+- Document assumptions clearly.
+- If official Blizzard APIs do not expose everything, design around that cleanly rather than forcing brittle workarounds.
+
+
+Now begin Phase 1 and Phase 2.
+
+I want you to:
+1. Recommend the stack.
+2. Explain why.
+3. Scaffold the full project structure.
+4. Create the initial README and environment example files.
+5. Create the initial schema/models/migrations.
+6. Stub out the Blizzard API integration layer.
+7. Build the first pass of the dashboard, roster page, and character detail page.
+
+Make practical choices and keep momentum. Do not stop at high-level theory only. Build the foundation.
