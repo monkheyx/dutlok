@@ -9,6 +9,7 @@ import Link from "next/link";
 import { ArrowLeft, Star, RefreshCw, Shield, Swords, Heart, Zap } from "lucide-react";
 import { CharacterActions } from "@/components/character-actions";
 import { TalentBuild } from "@/components/talent-build";
+import { ProfessionTiers } from "@/components/profession-tiers";
 
 export const dynamic = "force-dynamic";
 
@@ -127,22 +128,7 @@ export default function CharacterDetailPage({ params }: Props) {
         {/* Professions */}
         <div className="bg-card border border-border rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-4">Professions</h2>
-          {professions.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No profession data available.</p>
-          ) : (
-            <div className="space-y-3">
-              {professions.map((prof: any, i: number) => (
-                <div key={i} className="flex items-center justify-between">
-                  <span className="font-medium">{prof.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {prof.skillPoints !== undefined
-                      ? `${prof.skillPoints} / ${prof.maxSkillPoints}`
-                      : ""}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+          <ProfessionTiers professions={professions} />
 
           {/* Guild Rank */}
           <div className="border-t border-border mt-4 pt-4">
