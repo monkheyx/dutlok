@@ -86,21 +86,31 @@ export default function RaidsPage() {
   const [selectedChars, setSelectedChars] = useState<Map<number, string>>(new Map());
 
   const fetchData = useCallback(async () => {
+    // Fetch independently so one failure doesn't block others
     try {
-      const [charsRes, attRes, lootRes] = await Promise.all([
-        fetch("/api/characters"),
-        fetch("/api/attendance"),
-        fetch("/api/loot"),
-      ]);
-      const chars = await charsRes.json();
-      const att = await attRes.json();
-      const lootData = await lootRes.json();
-      setCharacters(Array.isArray(chars) ? chars.filter((c: Character) => c.isActive) : []);
-      setAttendance(Array.isArray(att) ? att : []);
-      setLoot(Array.isArray(lootData) ? lootData : []);
-    } catch {
-      // silent
-    }
+      const res = await fetch("/api/characters");
+      if (res.ok) {
+        const chars = await res.json();
+        setCharacters(Array.isArray(chars) ? chars.filter((c: Character) => c.isActive) : []);
+      }
+    } catch { /* silent */ }
+
+    try {
+      const res = await fetch("/api/attendance");
+      if (res.ok) {
+        const att = await res.json();
+        setAttendance(Array.isArray(att) ? att : []);
+      }
+    } catch { /* silent */ }
+
+    try {
+      const res = await fetch("/api/loot");
+      if (res.ok) {
+        const lootData = await res.json();
+        setLoot(Array.isArray(lootData) ? lootData : []);
+      }
+    } catch { /* silent */ }
+
     setLoading(false);
   }, []);
 
