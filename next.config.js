@@ -2,8 +2,8 @@
 const nextConfig = {
   experimental: {
     instrumentationHook: true,
+    serverComponentsExternalPackages: ["better-sqlite3", "node-cron"],
   },
-  serverExternalPackages: ["better-sqlite3", "node-cron"],
   output: "standalone",
   images: {
     remotePatterns: [
