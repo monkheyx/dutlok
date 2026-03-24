@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllCachedIcons } from "@/services/spell-icons";
 
+export const dynamic = "force-dynamic";
+
 // GET — return all cached spell icons as a map
 export async function GET(req: NextRequest) {
   const icons = getAllCachedIcons();
