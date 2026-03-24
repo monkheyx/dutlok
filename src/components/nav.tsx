@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Shield, Users, Calendar, BookOpen, Settings, Lock, ChevronDown, Map, ClipboardCheck, Wrench, Swords } from "lucide-react";
+import { Shield, Users, Calendar, BookOpen, Settings, Lock, ChevronDown, Map, ClipboardCheck, Wrench, Swords, KeyRound } from "lucide-react";
 import { useAdmin } from "@/components/admin-provider";
 
 interface NavLink {
@@ -16,7 +16,8 @@ interface NavLink {
 
 const links: NavLink[] = [
   { href: "/", label: "Dashboard", icon: Shield },
-  { href: "/strategies", label: "Strategies", icon: BookOpen },
+  { href: "/strategies", label: "Raids", icon: BookOpen },
+  { href: "/mythic-plus", label: "M+", icon: KeyRound },
   {
     href: "/roster",
     label: "Guild",
