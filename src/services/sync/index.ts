@@ -282,15 +282,24 @@ export async function syncAllCharacters(): Promise<{
 }
 
 function formatProfessions(data: BlizzardProfessions) {
-  const result: Array<{ name: string; skillPoints?: number; maxSkillPoints?: number }> = [];
+  const result: Array<{ name: string; tierName?: string; skillPoints?: number; maxSkillPoints?: number }> = [];
 
-  for (const prof of data.primaries ?? []) {
-    const currentTier = prof.tiers?.[0];
-    result.push({
-      name: prof.profession.name,
-      skillPoints: currentTier?.skill_points,
-      maxSkillPoints: currentTier?.max_skill_points,
-    });
+  for (const prof of [...(data.primaries ?? []), ...(data.secondaries ?? [])]) {
+    // Include all tiers so we can filter by expansion on the frontend
+    if (prof.tiers && prof.tiers.length > 0) {
+      for (const tier of prof.tiers) {
+        result.push({
+          name: prof.profession.name,
+          tierName: tier.tier?.name,
+          skillPoints: tier.skill_points,
+          maxSkillPoints: tier.max_skill_points,
+        });
+      }
+    } else {
+      result.push({
+        name: prof.profession.name,
+      });
+    }
   }
 
   return result;

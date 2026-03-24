@@ -21,7 +21,7 @@ export default function AuditPage() {
   const raidAudit = getRaidAudit();
   const vaultAudit = getVaultAudit();
   const dungeonAudit = getDungeonAudit();
-  const professionsAudit = getProfessionsAudit();
+  const professionsAudit = getProfessionsAudit(true, true);
 
   // Find all unique raid names across all characters, pick latest as default
   const allRaidNames = new Set<string>();

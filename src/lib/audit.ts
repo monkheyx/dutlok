@@ -322,11 +322,15 @@ export interface ProfessionEntry {
   className: string | null;
   isRaiderAlt: boolean;
   professionName: string;
+  tierName: string | null;
   skillPoints: number;
   maxSkillPoints: number;
 }
 
-export function getProfessionsAudit(raidersOnly = false): ProfessionEntry[] {
+// Current expansion tier name keyword — professions matching this are "current"
+const CURRENT_EXPANSION_KEYWORDS = ["Midnight", "Khaz Algar"];
+
+export function getProfessionsAudit(raidersOnly = false, currentExpansionOnly = false): ProfessionEntry[] {
   const characters = db
     .select()
     .from(schema.characters)
@@ -349,17 +353,31 @@ export function getProfessionsAudit(raidersOnly = false): ProfessionEntry[] {
     if (profile?.professions) {
       const profs = parseJsonArray(profile.professions);
       for (const prof of profs) {
-        if (prof?.name) {
-          results.push({
-            characterId: char.id,
-            characterName: char.name,
-            className: char.className,
-            isRaiderAlt: char.isRaiderAlt ?? false,
-            professionName: prof.name,
-            skillPoints: prof.skillPoints ?? 0,
-            maxSkillPoints: prof.maxSkillPoints ?? 0,
-          });
+        if (!prof?.name) continue;
+
+        const tierName = prof.tierName || null;
+
+        // If filtering to current expansion, skip tiers that don't match
+        if (currentExpansionOnly && tierName) {
+          const isCurrentTier = CURRENT_EXPANSION_KEYWORDS.some((kw) =>
+            tierName.toLowerCase().includes(kw.toLowerCase())
+          );
+          if (!isCurrentTier) continue;
         }
+
+        // Skip entries with 0/0 skill points (empty tiers)
+        if (currentExpansionOnly && !prof.skillPoints && !prof.maxSkillPoints) continue;
+
+        results.push({
+          characterId: char.id,
+          characterName: char.name,
+          className: char.className,
+          isRaiderAlt: char.isRaiderAlt ?? false,
+          professionName: prof.name,
+          tierName,
+          skillPoints: prof.skillPoints ?? 0,
+          maxSkillPoints: prof.maxSkillPoints ?? 0,
+        });
       }
     }
   }
