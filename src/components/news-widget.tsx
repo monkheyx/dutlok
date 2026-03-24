@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Newspaper, Pin, ChevronDown, ChevronUp, Plus, X, Bold, Italic, Heading1, Heading2, List, ListOrdered, Image, Link as LinkIcon, Loader2, CheckCircle, AlertCircle, Palette, Highlighter } from "lucide-react";
+import { Newspaper, Pin, ChevronDown, ChevronUp, Plus, X, Bold, Italic, Heading1, Heading2, List, ListOrdered, Image, Link as LinkIcon, Loader2, CheckCircle, AlertCircle, Palette, Highlighter, Pencil, Trash2 } from "lucide-react";
 import { useAdmin } from "@/components/admin-provider";
 import { cn } from "@/lib/utils";
 
@@ -25,11 +25,35 @@ function timeAgoShort(dateStr: string) {
   return new Date(dateStr).toLocaleDateString();
 }
 
-function NewsPostCard({ post }: { post: NewsPost }) {
-  const [expanded, setExpanded] = useState(false);
+function NewsPostCard({ post, isAdmin, password, onUpdated }: { post: NewsPost; isAdmin: boolean; password: string; onUpdated: () => void }) {
+  const [expanded, setExpanded] = useState(post.isPinned);
+  const [editing, setEditing] = useState(false);
+
+  async function handleDelete() {
+    if (!confirm(`Delete "${post.title}"?`)) return;
+    try {
+      await fetch(`/api/news/${post.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      onUpdated();
+    } catch { /* silent */ }
+  }
+
+  if (editing) {
+    return (
+      <InlineNewsEditor
+        password={password}
+        onSaved={() => { setEditing(false); onUpdated(); }}
+        onCancel={() => setEditing(false)}
+        existingPost={post}
+      />
+    );
+  }
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-secondary/20">
+    <div className={cn("border rounded-lg overflow-hidden bg-secondary/20", post.isPinned ? "border-primary/30" : "border-border")}>
       {/* Header image */}
       {post.imageUrl && (
         <div className="w-full max-h-48 overflow-hidden">
@@ -42,27 +66,41 @@ function NewsPostCard({ post }: { post: NewsPost }) {
             {post.isPinned && <Pin className="h-3.5 w-3.5 text-primary flex-shrink-0" />}
             <h3 className="text-sm font-semibold truncate">{post.title}</h3>
           </div>
-          <span className="text-xs text-muted-foreground whitespace-nowrap">{timeAgoShort(post.createdAt)}</span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">{timeAgoShort(post.createdAt)}</span>
+            {isAdmin && (
+              <>
+                <button onClick={() => setEditing(true)} className="p-0.5 text-muted-foreground/40 hover:text-primary transition-colors" title="Edit post">
+                  <Pencil className="h-3 w-3" />
+                </button>
+                <button onClick={handleDelete} className="p-0.5 text-muted-foreground/40 hover:text-red-400 transition-colors" title="Delete post">
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        {/* Content preview or full */}
+        {/* Pinned posts always show full content, others collapse */}
         <div
           className={cn(
             "mt-2 text-sm text-muted-foreground prose prose-invert prose-sm max-w-none",
             "[&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_a]:text-primary [&_img]:rounded-md [&_img]:max-w-full",
-            !expanded && "line-clamp-3"
+            !post.isPinned && !expanded && "line-clamp-3"
           )}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="mt-1 flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-        >
-          {expanded ? (
-            <>Show less <ChevronUp className="h-3 w-3" /></>
-          ) : (
-            <>Read more <ChevronDown className="h-3 w-3" /></>
-          )}
-        </button>
+        {!post.isPinned && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="mt-1 flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+          >
+            {expanded ? (
+              <>Show less <ChevronUp className="h-3 w-3" /></>
+            ) : (
+              <>Read more <ChevronDown className="h-3 w-3" /></>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -81,16 +119,26 @@ function ToolBtn({ icon: Icon, title, onClick }: { icon: React.ComponentType<{ c
   );
 }
 
-function InlineNewsEditor({ password, onSaved, onCancel }: { password: string; onSaved: () => void; onCancel: () => void }) {
-  const [title, setTitle] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isPinned, setIsPinned] = useState(false);
+function InlineNewsEditor({ password, onSaved, onCancel, existingPost }: { password: string; onSaved: () => void; onCancel: () => void; existingPost?: NewsPost }) {
+  const isEdit = !!existingPost;
+  const [title, setTitle] = useState(existingPost?.title || "");
+  const [imageUrl, setImageUrl] = useState<string | null>(existingPost?.imageUrl || null);
+  const [isPinned, setIsPinned] = useState(existingPost?.isPinned || false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textColorRef = useRef<HTMLInputElement>(null);
   const bgColorRef = useRef<HTMLInputElement>(null);
+  const initialized = useRef(false);
+
+  // Load existing content into editor
+  useEffect(() => {
+    if (existingPost && editorRef.current && !initialized.current) {
+      editorRef.current.innerHTML = existingPost.content;
+      initialized.current = true;
+    }
+  }, [existingPost]);
 
   function exec(command: string, value?: string) {
     document.execCommand(command, false, value);
@@ -108,8 +156,10 @@ function InlineNewsEditor({ password, onSaved, onCancel }: { password: string; o
     setMessage(null);
 
     try {
-      const res = await fetch("/api/news", {
-        method: "POST",
+      const url = isEdit ? `/api/news/${existingPost!.id}` : "/api/news";
+      const method = isEdit ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password, title, content, imageUrl, isPinned }),
       });
@@ -157,7 +207,7 @@ function InlineNewsEditor({ password, onSaved, onCancel }: { password: string; o
     <div className="border border-border rounded-lg overflow-hidden bg-secondary/20">
       <div className="p-3 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">New Post</h3>
+          <h3 className="text-sm font-semibold">{isEdit ? "Edit Post" : "New Post"}</h3>
           <button onClick={onCancel} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
@@ -263,14 +313,20 @@ function InlineNewsEditor({ password, onSaved, onCancel }: { password: string; o
         suppressContentEditableWarning
       />
 
-      <div className="p-3 border-t border-border flex justify-end">
+      <div className="p-3 border-t border-border flex justify-end gap-2">
+        <button
+          onClick={onCancel}
+          className="bg-secondary border border-border rounded-md py-1.5 px-4 text-sm hover:bg-accent transition-colors"
+        >
+          Cancel
+        </button>
         <button
           onClick={handleSave}
           disabled={saving}
           className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-4 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          Publish
+          {isEdit ? "Update" : "Publish"}
         </button>
       </div>
 
@@ -320,7 +376,7 @@ export function NewsWidget() {
         )}
       </div>
 
-      {/* Inline editor */}
+      {/* Inline editor for new post */}
       {showEditor && (
         <div className="mb-4">
           <InlineNewsEditor
@@ -338,7 +394,13 @@ export function NewsWidget() {
       ) : (
         <div className="space-y-3">
           {posts.map((post) => (
-            <NewsPostCard key={post.id} post={post} />
+            <NewsPostCard
+              key={post.id}
+              post={post}
+              isAdmin={isAuthenticated}
+              password={password}
+              onUpdated={fetchPosts}
+            />
           ))}
         </div>
       )}
