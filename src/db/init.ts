@@ -200,6 +200,7 @@ export function initializeDatabase() {
       content TEXT NOT NULL,
       image_url TEXT,
       is_pinned INTEGER DEFAULT 0,
+      created_by TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -231,6 +232,7 @@ export function initializeDatabase() {
   safeAddColumn("characters", "is_raider", "INTEGER DEFAULT 0");
   safeAddColumn("characters", "is_raider_alt", "INTEGER DEFAULT 0");
   safeAddColumn("characters", "notes", "TEXT");
+  safeAddColumn("news_posts", "created_by", "TEXT");
 
   sqlite.close();
   console.log("[DB] Database initialized at:", resolvedPath);

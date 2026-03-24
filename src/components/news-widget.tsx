@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Newspaper, Pin, ChevronDown, ChevronUp, Plus, X, Bold, Italic, Heading1, Heading2, List, ListOrdered, Image, Link as LinkIcon, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Newspaper, Pin, ChevronDown, ChevronUp, Plus, X, Bold, Italic, Heading1, Heading2, List, ListOrdered, Image, Link as LinkIcon, Loader2, CheckCircle, AlertCircle, Palette, Highlighter } from "lucide-react";
 import { useAdmin } from "@/components/admin-provider";
 import { cn } from "@/lib/utils";
 
@@ -89,6 +89,8 @@ function InlineNewsEditor({ password, onSaved, onCancel }: { password: string; o
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textColorRef = useRef<HTMLInputElement>(null);
+  const bgColorRef = useRef<HTMLInputElement>(null);
 
   function exec(command: string, value?: string) {
     document.execCommand(command, false, value);
@@ -221,6 +223,29 @@ function InlineNewsEditor({ password, onSaved, onCancel }: { password: string; o
         <div className="w-px h-5 bg-border mx-1" />
         <ToolBtn icon={List} title="Bullet List" onClick={() => exec("insertUnorderedList")} />
         <ToolBtn icon={ListOrdered} title="Numbered List" onClick={() => exec("insertOrderedList")} />
+        <div className="w-px h-5 bg-border mx-1" />
+        {/* Text color */}
+        <div className="relative">
+          <ToolBtn icon={Palette} title="Text Color" onClick={() => textColorRef.current?.click()} />
+          <input
+            ref={textColorRef}
+            type="color"
+            defaultValue="#ffffff"
+            onChange={(e) => exec("foreColor", e.target.value)}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+        </div>
+        {/* Highlight color */}
+        <div className="relative">
+          <ToolBtn icon={Highlighter} title="Highlight Color" onClick={() => bgColorRef.current?.click()} />
+          <input
+            ref={bgColorRef}
+            type="color"
+            defaultValue="#ffff00"
+            onChange={(e) => exec("hiliteColor", e.target.value)}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+        </div>
         <div className="w-px h-5 bg-border mx-1" />
         <ToolBtn icon={LinkIcon} title="Insert Link" onClick={() => {
           const url = prompt("Enter URL:");
