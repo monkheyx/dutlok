@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { RefreshCw, Download, UserPlus, AlertCircle, CheckCircle, KeyRound, LogOut } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { RefreshCw, Download, UserPlus, AlertCircle, CheckCircle, KeyRound, LogOut, Swords, Search } from "lucide-react";
 import { useAdmin } from "@/components/admin-provider";
 import { PendingRegistrations } from "@/components/pending-registrations";
+import { NewsEditor } from "@/components/news-editor";
+import { cn } from "@/lib/utils";
 
 export default function AdminPage() {
   const { password, isAuthenticated, login, logout } = useAdmin();
@@ -19,6 +21,49 @@ export default function AdminPage() {
   // Password change form
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Raider management
+  interface RosterChar { id: number; name: string; className: string | null; isActive: boolean; isRaider: boolean; isRaiderAlt: boolean; }
+  const [rosterChars, setRosterChars] = useState<RosterChar[]>([]);
+  const [rosterLoaded, setRosterLoaded] = useState(false);
+  const [raiderSearch, setRaiderSearch] = useState("");
+
+  const fetchRoster = useCallback(async () => {
+    try {
+      const res = await fetch("/api/characters");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setRosterChars(data.filter((c: RosterChar) => c.isActive));
+      }
+    } catch { /* silent */ }
+    setRosterLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) fetchRoster();
+  }, [isAuthenticated, fetchRoster]);
+
+  async function toggleRaider(charId: number, current: boolean) {
+    try {
+      await fetch(`/api/characters/${charId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, isRaider: !current, ...(current ? {} : { isRaiderAlt: false }) }),
+      });
+      setRosterChars((prev) => prev.map((c) => c.id === charId ? { ...c, isRaider: !current, ...(current ? {} : { isRaiderAlt: false }) } : c));
+    } catch { /* silent */ }
+  }
+
+  async function toggleRaiderAlt(charId: number, current: boolean) {
+    try {
+      await fetch(`/api/characters/${charId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, isRaiderAlt: !current, ...(!current ? { isRaider: false } : {}) }),
+      });
+      setRosterChars((prev) => prev.map((c) => c.id === charId ? { ...c, isRaiderAlt: !current, ...(!current ? { isRaider: false } : {}) } : c));
+    } catch { /* silent */ }
+  }
 
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault();
@@ -195,6 +240,11 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* News Management */}
+      <div className="bg-card border border-border rounded-lg p-4">
+        <NewsEditor />
+      </div>
+
       {/* Pending Registrations */}
       <div className="bg-card border border-border rounded-lg p-4">
         <PendingRegistrations />
@@ -317,6 +367,72 @@ export default function AdminPage() {
             Change Password
           </button>
         </form>
+      </div>
+
+      {/* Manage Raiders */}
+      <div className="bg-card border border-border rounded-lg p-4">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Swords className="h-5 w-5" />
+          Manage Raiders
+        </h2>
+        <p className="text-sm text-muted-foreground mb-3">
+          Click once to mark as <span className="text-primary font-medium">Raider</span>, click again for <span className="text-yellow-400 font-medium">Raider Alt</span>, click again to remove.
+        </p>
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={raiderSearch}
+            onChange={(e) => setRaiderSearch(e.target.value)}
+            placeholder="Search characters..."
+            className="w-full pl-9 pr-3 py-2 bg-secondary border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        {rosterLoaded ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 max-h-80 overflow-y-auto">
+            {rosterChars
+              .filter((c) => c.name.toLowerCase().includes(raiderSearch.toLowerCase()))
+              .map((char) => (
+              <button
+                key={char.id}
+                onClick={() => {
+                  if (!char.isRaider && !char.isRaiderAlt) {
+                    // Not tagged -> set as raider
+                    toggleRaider(char.id, false);
+                  } else if (char.isRaider) {
+                    // Raider -> set as raider alt
+                    toggleRaiderAlt(char.id, false);
+                  } else {
+                    // Raider alt -> remove
+                    toggleRaiderAlt(char.id, true);
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-2 px-2 py-1.5 rounded border text-sm text-left transition-colors",
+                  char.isRaider
+                    ? "bg-primary/15 border-primary/40 text-primary"
+                    : char.isRaiderAlt
+                    ? "bg-yellow-500/15 border-yellow-500/40 text-yellow-400"
+                    : "bg-secondary/50 border-border text-muted-foreground hover:bg-secondary"
+                )}
+              >
+                <span className={cn(
+                  "w-2 h-2 rounded-full flex-shrink-0",
+                  char.isRaider ? "bg-primary" : char.isRaiderAlt ? "bg-yellow-400" : "bg-muted-foreground/30"
+                )} />
+                <span className="truncate font-medium">{char.name}</span>
+                {char.isRaiderAlt && <span className="text-[10px] text-yellow-400/70 ml-auto flex-shrink-0">ALT</span>}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Loading roster...</p>
+        )}
+        <div className="mt-2 text-xs text-muted-foreground flex gap-4">
+          <span>{rosterChars.filter((c) => c.isRaider).length} raiders</span>
+          <span>{rosterChars.filter((c) => c.isRaiderAlt).length} raider alts</span>
+          <span>{rosterChars.length} total</span>
+        </div>
       </div>
 
       {/* Info */}

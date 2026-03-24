@@ -102,7 +102,25 @@ export interface BlizzardProfessionEntry {
     tier: { name: string; id: number };
     skill_points: number;
     max_skill_points: number;
+    known_recipes?: Array<{
+      key: { href: string };
+      name: string;
+      id: number;
+    }>;
   }>;
+}
+
+export interface BlizzardRecipeDetail {
+  id: number;
+  name: string;
+  description?: string;
+  media?: { key: { href: string }; id: number };
+  crafted_item?: { key: { href: string }; name: string; id: number };
+  reagents?: Array<{
+    reagent: { key: { href: string }; name: string; id: number };
+    quantity: number;
+  }>;
+  crafted_quantity?: { value: number };
 }
 
 export interface BlizzardMythicKeystoneProfile {

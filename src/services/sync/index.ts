@@ -11,6 +11,7 @@ import type {
   BlizzardGuildRoster,
 } from "@/services/blizzard/types";
 import { inferRole } from "@/lib/wow-data";
+import { extractSpellIdsFromTalents, cacheSpellIcons } from "@/services/spell-icons";
 
 /**
  * Import the full guild roster from Blizzard API.
@@ -52,10 +53,14 @@ export async function importGuildRoster(): Promise<{
         )
         .get();
 
+      // Blizzard may omit realm.name for some characters — fall back to slug or guild realm
+      const realmName = char.realm?.name || char.realm?.slug || realmSlug;
+      const charRealmSlug = char.realm?.slug || realmSlug;
+
       const charData = {
         name: char.name,
-        realm: char.realm.name,
-        realmSlug: char.realm.slug,
+        realm: realmName,
+        realmSlug: charRealmSlug,
         region: process.env.BLIZZARD_REGION || "us",
         level: char.level,
         guildRank: member.rank,
@@ -184,6 +189,27 @@ export async function syncCharacter(characterId: number): Promise<void> {
   } else {
     db.insert(schema.characterProfiles).values(profileData).run();
   }
+
+  // Sync known recipes from professions data
+  if (professions) {
+    try {
+      syncCharacterRecipes(characterId, character.name, professions);
+    } catch {
+      // Non-critical, don't fail sync
+    }
+  }
+
+  // Cache spell icons for talents
+  if (data.specs) {
+    try {
+      const spellIds = extractSpellIdsFromTalents(data.specs);
+      if (spellIds.length > 0) {
+        await cacheSpellIcons(spellIds);
+      }
+    } catch {
+      // Non-critical, don't fail sync
+    }
+  }
 }
 
 /**
@@ -268,4 +294,56 @@ function formatProfessions(data: BlizzardProfessions) {
   }
 
   return result;
+}
+
+/**
+ * Extract and store all known recipes for a character from their professions data.
+ */
+function syncCharacterRecipes(
+  characterId: number,
+  characterName: string,
+  professions: BlizzardProfessions
+) {
+  // Delete existing recipes for this character so we get a fresh snapshot
+  db.delete(schema.characterRecipes)
+    .where(eq(schema.characterRecipes.characterId, characterId))
+    .run();
+
+  const now = new Date().toISOString();
+  const recipes: Array<{
+    characterId: number;
+    characterName: string;
+    professionName: string;
+    recipeId: number;
+    recipeName: string;
+    tierName: string | null;
+    syncedAt: string;
+  }> = [];
+
+  for (const prof of [...(professions.primaries ?? []), ...(professions.secondaries ?? [])]) {
+    const professionName = prof.profession.name;
+    for (const tier of prof.tiers ?? []) {
+      const tierName = tier.tier?.name ?? null;
+      for (const recipe of tier.known_recipes ?? []) {
+        recipes.push({
+          characterId,
+          characterName,
+          professionName,
+          recipeId: recipe.id,
+          recipeName: recipe.name,
+          tierName,
+          syncedAt: now,
+        });
+      }
+    }
+  }
+
+  // Batch insert recipes
+  if (recipes.length > 0) {
+    for (const recipe of recipes) {
+      db.insert(schema.characterRecipes).values(recipe).run();
+    }
+  }
+
+  return recipes.length;
 }

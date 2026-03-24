@@ -1,5 +1,5 @@
 import { db, schema } from "@/db";
-import { eq } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 
 // --- Enchant & Gem Audit ---
 
@@ -9,6 +9,7 @@ interface EnchantAudit {
   className: string | null;
   activeSpec: string | null;
   itemLevel: number | null;
+  isRaiderAlt: boolean;
   missingEnchants: string[];
   missingGems: string[];
   totalMissing: number;
@@ -21,7 +22,7 @@ export function getEnchantGemAudit(): EnchantAudit[] {
   const characters = db
     .select()
     .from(schema.characters)
-    .where(eq(schema.characters.isActive, true))
+    .where(and(eq(schema.characters.isActive, true), or(eq(schema.characters.isRaider, true), eq(schema.characters.isRaiderAlt, true))))
     .all();
 
   const results: EnchantAudit[] = [];
@@ -68,6 +69,7 @@ export function getEnchantGemAudit(): EnchantAudit[] {
       className: char.className,
       activeSpec: char.activeSpec,
       itemLevel: char.equippedItemLevel ?? char.itemLevel,
+      isRaiderAlt: char.isRaiderAlt ?? false,
       missingEnchants,
       missingGems,
       totalMissing: missingEnchants.length + missingGems.length,
@@ -106,6 +108,7 @@ export interface RaidAudit {
   className: string | null;
   activeSpec: string | null;
   itemLevel: number | null;
+  isRaiderAlt: boolean;
   raids: RaidProgress[];
 }
 
@@ -113,7 +116,7 @@ export function getRaidAudit(): RaidAudit[] {
   const characters = db
     .select()
     .from(schema.characters)
-    .where(eq(schema.characters.isActive, true))
+    .where(and(eq(schema.characters.isActive, true), or(eq(schema.characters.isRaider, true), eq(schema.characters.isRaiderAlt, true))))
     .all();
 
   const results: RaidAudit[] = [];
@@ -180,6 +183,7 @@ export function getRaidAudit(): RaidAudit[] {
       className: char.className,
       activeSpec: char.activeSpec,
       itemLevel: char.equippedItemLevel ?? char.itemLevel,
+      isRaiderAlt: char.isRaiderAlt ?? false,
       raids,
     });
   }
@@ -196,6 +200,7 @@ export interface VaultAudit {
   characterName: string;
   className: string | null;
   activeSpec: string | null;
+  isRaiderAlt: boolean;
   mythicPlusRating: number | null;
   weeklyMythicRuns: number;
   bestRuns: Array<{ dungeon: string; level: number; timed: boolean }>;
@@ -205,7 +210,7 @@ export function getVaultAudit(): VaultAudit[] {
   const characters = db
     .select()
     .from(schema.characters)
-    .where(eq(schema.characters.isActive, true))
+    .where(and(eq(schema.characters.isActive, true), or(eq(schema.characters.isRaider, true), eq(schema.characters.isRaiderAlt, true))))
     .all();
 
   const results: VaultAudit[] = [];
@@ -239,6 +244,7 @@ export function getVaultAudit(): VaultAudit[] {
       characterName: char.name,
       className: char.className,
       activeSpec: char.activeSpec,
+      isRaiderAlt: char.isRaiderAlt ?? false,
       mythicPlusRating: profile?.mythicPlusRating ?? null,
       weeklyMythicRuns: weeklyMythicRuns,
       bestRuns,
@@ -256,6 +262,7 @@ export interface DungeonAudit {
   characterName: string;
   className: string | null;
   activeSpec: string | null;
+  isRaiderAlt: boolean;
   mythicPlusRating: number | null;
   bestRuns: Array<{ dungeon: string; level: number; timed: boolean; duration: number }>;
 }
@@ -264,7 +271,7 @@ export function getDungeonAudit(): DungeonAudit[] {
   const characters = db
     .select()
     .from(schema.characters)
-    .where(eq(schema.characters.isActive, true))
+    .where(and(eq(schema.characters.isActive, true), or(eq(schema.characters.isRaider, true), eq(schema.characters.isRaiderAlt, true))))
     .all();
 
   const results: DungeonAudit[] = [];
@@ -297,6 +304,7 @@ export function getDungeonAudit(): DungeonAudit[] {
       characterName: char.name,
       className: char.className,
       activeSpec: char.activeSpec,
+      isRaiderAlt: char.isRaiderAlt ?? false,
       mythicPlusRating: profile?.mythicPlusRating ?? null,
       bestRuns,
     });
@@ -312,16 +320,21 @@ export interface ProfessionEntry {
   characterId: number;
   characterName: string;
   className: string | null;
+  isRaiderAlt: boolean;
   professionName: string;
   skillPoints: number;
   maxSkillPoints: number;
 }
 
-export function getProfessionsAudit(): ProfessionEntry[] {
+export function getProfessionsAudit(raidersOnly = false): ProfessionEntry[] {
   const characters = db
     .select()
     .from(schema.characters)
-    .where(eq(schema.characters.isActive, true))
+    .where(
+      raidersOnly
+        ? and(eq(schema.characters.isActive, true), or(eq(schema.characters.isRaider, true), eq(schema.characters.isRaiderAlt, true)))
+        : eq(schema.characters.isActive, true)
+    )
     .all();
 
   const results: ProfessionEntry[] = [];
@@ -341,6 +354,7 @@ export function getProfessionsAudit(): ProfessionEntry[] {
             characterId: char.id,
             characterName: char.name,
             className: char.className,
+            isRaiderAlt: char.isRaiderAlt ?? false,
             professionName: prof.name,
             skillPoints: prof.skillPoints ?? 0,
             maxSkillPoints: prof.maxSkillPoints ?? 0,

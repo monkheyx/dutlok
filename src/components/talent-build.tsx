@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Copy, Check, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Copy, Check, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TalentBuildProps {
@@ -15,18 +15,27 @@ interface ParsedTalent {
   description?: string;
   rank: number;
   maxRank: number;
+  spellId?: number;
   type: "class" | "spec" | "hero";
 }
 
 export function TalentBuild({ talents, className: wowClass, activeSpec }: TalentBuildProps) {
   const [copied, setCopied] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [icons, setIcons] = useState<Record<number, string>>({});
 
   const { classTalents, specTalents, heroTalents, loadoutCode, heroTreeName } = useMemo(() => {
-    return parseTalentData(talents);
-  }, [talents]);
+    return parseTalentData(talents, activeSpec);
+  }, [talents, activeSpec]);
 
   const hasTalents = classTalents.length > 0 || specTalents.length > 0 || heroTalents.length > 0;
+
+  // Fetch spell icons
+  useEffect(() => {
+    fetch("/api/spell-icons")
+      .then((r) => r.json())
+      .then((data) => setIcons(data))
+      .catch(() => {});
+  }, []);
 
   if (!hasTalents && !loadoutCode) {
     return (
@@ -55,10 +64,6 @@ export function TalentBuild({ talents, className: wowClass, activeSpec }: Talent
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
-
-  function toggleSection(section: string) {
-    setExpandedSection(expandedSection === section ? null : section);
   }
 
   return (
@@ -92,7 +97,10 @@ export function TalentBuild({ talents, className: wowClass, activeSpec }: Talent
       {loadoutCode && (
         <div className="mb-4">
           <label className="text-xs text-muted-foreground">Loadout Code</label>
-          <div className="mt-1 bg-secondary rounded-md p-2 font-mono text-xs break-all select-all cursor-pointer" onClick={handleCopy}>
+          <div
+            className="mt-1 bg-secondary rounded-md p-2 font-mono text-xs break-all select-all cursor-pointer"
+            onClick={handleCopy}
+          >
             {loadoutCode}
           </div>
         </div>
@@ -102,25 +110,21 @@ export function TalentBuild({ talents, className: wowClass, activeSpec }: Talent
       {heroTalents.length > 0 && (
         <TalentSection
           label={heroTreeName || "Hero Talents"}
-          count={heroTalents.length}
           talents={heroTalents}
-          color="text-amber-400"
-          bgColor="bg-amber-500/10 border-amber-500/30"
-          isExpanded={expandedSection === "hero"}
-          onToggle={() => toggleSection("hero")}
+          icons={icons}
+          accentColor="border-amber-500/50"
+          labelColor="text-amber-400"
         />
       )}
 
       {/* Class Talents */}
       {classTalents.length > 0 && (
         <TalentSection
-          label="Class Talents"
-          count={classTalents.length}
+          label={`${wowClass || "Class"} Talents`}
           talents={classTalents}
-          color="text-blue-400"
-          bgColor="bg-blue-500/10 border-blue-500/30"
-          isExpanded={expandedSection === "class"}
-          onToggle={() => toggleSection("class")}
+          icons={icons}
+          accentColor="border-blue-500/50"
+          labelColor="text-blue-400"
         />
       )}
 
@@ -128,12 +132,10 @@ export function TalentBuild({ talents, className: wowClass, activeSpec }: Talent
       {specTalents.length > 0 && (
         <TalentSection
           label={`${activeSpec || "Spec"} Talents`}
-          count={specTalents.length}
           talents={specTalents}
-          color="text-green-400"
-          bgColor="bg-green-500/10 border-green-500/30"
-          isExpanded={expandedSection === "spec"}
-          onToggle={() => toggleSection("spec")}
+          icons={icons}
+          accentColor="border-green-500/50"
+          labelColor="text-green-400"
         />
       )}
     </div>
@@ -142,81 +144,96 @@ export function TalentBuild({ talents, className: wowClass, activeSpec }: Talent
 
 function TalentSection({
   label,
-  count,
   talents,
-  color,
-  bgColor,
-  isExpanded,
-  onToggle,
+  icons,
+  accentColor,
+  labelColor,
 }: {
   label: string;
-  count: number;
   talents: ParsedTalent[];
-  color: string;
-  bgColor: string;
-  isExpanded: boolean;
-  onToggle: () => void;
+  icons: Record<number, string>;
+  accentColor: string;
+  labelColor: string;
 }) {
   return (
-    <div className="mb-3">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-secondary/50 hover:bg-secondary transition-colors text-sm"
-      >
-        <span className="flex items-center gap-2">
-          <span className={cn("font-medium", color)}>{label}</span>
-          <span className="text-xs text-muted-foreground">({count})</span>
+    <div className="mb-4">
+      <div className="flex items-center gap-2 mb-2">
+        <span className={cn("text-xs font-semibold uppercase tracking-wide", labelColor)}>
+          {label}
         </span>
-        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-      </button>
-
-      {/* Compact pill view (always shown) */}
-      <div className="flex flex-wrap gap-1 mt-2 px-1">
+        <span className="text-xs text-muted-foreground">({talents.length})</span>
+      </div>
+      <div className="flex flex-wrap gap-1">
         {talents.map((talent, i) => (
-          <span
-            key={i}
-            className={cn(
-              "inline-flex items-center px-2 py-0.5 rounded border text-xs font-medium",
-              bgColor
-            )}
-            title={talent.description || talent.name}
-          >
-            {talent.name}
-            {talent.maxRank > 1 && (
-              <span className="ml-1 text-muted-foreground">
-                {talent.rank}/{talent.maxRank}
-              </span>
-            )}
-          </span>
+          <TalentIcon key={i} talent={talent} iconUrl={talent.spellId ? icons[talent.spellId] : undefined} accentColor={accentColor} />
         ))}
       </div>
+    </div>
+  );
+}
 
-      {/* Expanded detail view */}
-      {isExpanded && (
-        <div className="mt-2 space-y-1 px-1">
-          {talents.map((talent, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-2 px-3 py-1.5 rounded bg-secondary/30 text-sm"
-            >
-              <span className={cn("font-medium shrink-0", color)}>{talent.name}</span>
-              {talent.maxRank > 1 && (
-                <span className="text-xs text-muted-foreground shrink-0">
-                  ({talent.rank}/{talent.maxRank})
-                </span>
-              )}
-              {talent.description && (
-                <span className="text-xs text-muted-foreground line-clamp-1">{talent.description}</span>
-              )}
+function TalentIcon({
+  talent,
+  iconUrl,
+  accentColor,
+}: {
+  talent: ParsedTalent;
+  iconUrl?: string;
+  accentColor: string;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <div
+        className={cn(
+          "w-10 h-10 rounded border-2 overflow-hidden flex items-center justify-center cursor-default transition-all",
+          "bg-secondary/80 hover:brightness-125 hover:scale-110",
+          accentColor
+        )}
+      >
+        {iconUrl ? (
+          <img
+            src={iconUrl}
+            alt={talent.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <span className="text-[8px] text-muted-foreground text-center leading-tight px-0.5 line-clamp-2">
+            {talent.name.split(" ").slice(0, 2).join("\n")}
+          </span>
+        )}
+      </div>
+      {/* Rank badge */}
+      {talent.maxRank > 1 && (
+        <span className="absolute -bottom-0.5 -right-0.5 bg-black/80 border border-border text-[8px] font-bold rounded px-0.5 text-white">
+          {talent.rank}/{talent.maxRank}
+        </span>
+      )}
+      {/* Tooltip */}
+      {showTooltip && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1a1a2e] border border-[#3a3a5c] rounded-md px-3 py-2 shadow-xl pointer-events-none min-w-[200px] max-w-[300px]">
+          <div className="text-sm font-semibold text-white">{talent.name}</div>
+          {talent.maxRank > 1 && (
+            <div className="text-xs text-yellow-400 mt-0.5">
+              Rank {talent.rank}/{talent.maxRank}
             </div>
-          ))}
+          )}
+          {talent.description && (
+            <div className="text-xs text-gray-300 mt-1 leading-relaxed">{talent.description}</div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function parseTalentData(raw: any): {
+function parseTalentData(raw: any, activeSpec: string | null): {
   classTalents: ParsedTalent[];
   specTalents: ParsedTalent[];
   heroTalents: ParsedTalent[];
@@ -236,11 +253,15 @@ function parseTalentData(raw: any): {
     if (typeof data === "string") data = JSON.parse(data);
 
     if (data?.specializations && Array.isArray(data.specializations)) {
-      for (const spec of data.specializations) {
-        if (spec?.loadouts && Array.isArray(spec.loadouts)) {
-          const loadout = spec.loadouts.find((l: any) => l.is_active) || spec.loadouts[0];
-          if (!loadout) continue;
+      // Find only the active spec — don't loop through all specs
+      const matchedSpec = activeSpec
+        ? data.specializations.find((s: any) => s.specialization?.name === activeSpec)
+        : null;
+      const spec = matchedSpec || data.specializations[0];
 
+      if (spec?.loadouts && Array.isArray(spec.loadouts)) {
+        const loadout = spec.loadouts.find((l: any) => l.is_active) || spec.loadouts[0];
+        if (loadout) {
           loadoutCode = loadout.talent_loadout_code || loadout.loadout_code || null;
 
           if (loadout.selected_class_talents) {
@@ -260,7 +281,6 @@ function parseTalentData(raw: any): {
               const talent = extractTalent(t, "hero");
               if (talent) heroTalents.push(talent);
             }
-            // Try to get hero tree name
             if (loadout.selected_hero_talent_tree?.name) {
               heroTreeName = loadout.selected_hero_talent_tree.name;
             }
@@ -302,15 +322,18 @@ function extractTalent(t: any, type: "class" | "spec" | "hero"): ParsedTalent | 
 
   if (!name) return null;
 
-  const description =
-    t?.tooltip?.spell_tooltip?.description ||
-    t?.spell_tooltip?.description;
+  const description = t?.tooltip?.spell_tooltip?.description || t?.spell_tooltip?.description;
+
+  const spellId =
+    t?.tooltip?.spell_tooltip?.spell?.id ||
+    t?.spell_tooltip?.spell?.id;
 
   return {
     name,
     description: description || undefined,
     rank: t?.rank ?? 1,
     maxRank: t?.max_rank ?? 1,
+    spellId: spellId || undefined,
     type,
   };
 }

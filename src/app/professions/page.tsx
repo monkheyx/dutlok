@@ -5,7 +5,7 @@ import { ProfessionSearch } from "@/components/profession-search";
 export const dynamic = "force-dynamic";
 
 export default function ProfessionsPage() {
-  const professionsAudit = getProfessionsAudit();
+  const professionsAudit = getProfessionsAudit(false);
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8 space-y-6">

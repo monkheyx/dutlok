@@ -163,6 +163,36 @@ export async function getCharacterPvpSummary(realmSlug: string, characterName: s
   });
 }
 
+export async function getSpellMedia(spellId: number): Promise<{ iconUrl: string | null }> {
+  try {
+    const data = await apiRequest<any>(`/data/wow/media/spell/${spellId}`, {
+      namespace: "static",
+    });
+    const iconUrl = data?.assets?.find((a: any) => a.key === "icon")?.value || null;
+    return { iconUrl };
+  } catch {
+    return { iconUrl: null };
+  }
+}
+
+export async function getRecipeDetails(recipeId: number) {
+  return apiRequest(`/data/wow/recipe/${recipeId}`, {
+    namespace: "static",
+  });
+}
+
+export async function getRecipeMedia(recipeId: number): Promise<{ iconUrl: string | null }> {
+  try {
+    const data = await apiRequest<any>(`/data/wow/media/recipe/${recipeId}`, {
+      namespace: "static",
+    });
+    const iconUrl = data?.assets?.find((a: any) => a.key === "icon")?.value || null;
+    return { iconUrl };
+  } catch {
+    return { iconUrl: null };
+  }
+}
+
 export async function getCharacterEncounters(realmSlug: string, characterName: string) {
   const name = characterName.toLowerCase();
   return apiRequest(`/profile/wow/character/${realmSlug}/${name}/encounters/raids`, {

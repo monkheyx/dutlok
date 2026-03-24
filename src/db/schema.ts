@@ -38,6 +38,8 @@ export const characters = sqliteTable(
     profileUrl: text("profile_url"),
     isMain: integer("is_main", { mode: "boolean" }).default(false),
     isActive: integer("is_active", { mode: "boolean" }).default(true),
+    isRaider: integer("is_raider", { mode: "boolean" }).default(false),
+    isRaiderAlt: integer("is_raider_alt", { mode: "boolean" }).default(false),
     raidTeam: text("raid_team"),
     lastSyncedAt: text("last_synced_at"),
     blizzardId: integer("blizzard_id"),
@@ -130,6 +132,14 @@ export const raidLoot = sqliteTable("raid_loot", {
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
+// Spell icon cache
+export const spellIcons = sqliteTable("spell_icons", {
+  spellId: integer("spell_id").primaryKey(),
+  iconUrl: text("icon_url").notNull(),
+  spellName: text("spell_name"),
+  cachedAt: text("cached_at"),
+});
+
 // Character registration requests
 export const registrations = sqliteTable("registrations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -142,6 +152,72 @@ export const registrations = sqliteTable("registrations", {
   reviewedBy: text("reviewed_by"),
   reviewedAt: text("reviewed_at"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// Raid attendance tracking
+export const raidAttendance = sqliteTable("raid_attendance", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  raidName: text("raid_name").notNull(),
+  raidDate: text("raid_date").notNull(),
+  difficulty: text("difficulty"), // Normal, Heroic, Mythic
+  characterId: integer("character_id").references(() => characters.id, { onDelete: "set null" }),
+  characterName: text("character_name").notNull(),
+  status: text("status").notNull().default("present"), // present, late, absent, bench
+  notes: text("notes"),
+  createdBy: text("created_by"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// Neighborhood plot assignments
+export const neighborhoodPlots = sqliteTable("neighborhood_plots", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  mapId: integer("map_id").notNull().default(1),
+  plotId: integer("plot_id").notNull(),
+  shardIndex: integer("shard_index").notNull().default(0),
+  characterId: integer("character_id").references(() => characters.id, { onDelete: "set null" }),
+  characterName: text("character_name").notNull(),
+  status: text("status").notNull().default("requested"), // requested, approved
+  rankedChoice: integer("ranked_choice").notNull().default(1), // 1, 2, or 3
+  note: text("note"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").default(sql`(datetime('now'))`),
+});
+
+// Character recipes synced from Blizzard API
+export const characterRecipes = sqliteTable("character_recipes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  characterId: integer("character_id")
+    .notNull()
+    .references(() => characters.id, { onDelete: "cascade" }),
+  characterName: text("character_name").notNull(),
+  professionName: text("profession_name").notNull(),
+  recipeId: integer("recipe_id").notNull(),
+  recipeName: text("recipe_name").notNull(),
+  tierName: text("tier_name"), // e.g. "Khaz Algar Blacksmithing"
+  syncedAt: text("synced_at").default(sql`(datetime('now'))`),
+});
+
+// Craftable items linked to characters (manual overrides/supplements)
+export const craftableItems = sqliteTable("craftable_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  itemName: text("item_name").notNull(),
+  professionName: text("profession_name").notNull(),
+  characterId: integer("character_id").references(() => characters.id, { onDelete: "cascade" }),
+  characterName: text("character_name").notNull(),
+  notes: text("notes"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// News posts
+export const newsPosts = sqliteTable("news_posts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  content: text("content").notNull(), // HTML content
+  imageUrl: text("image_url"), // optional header image (base64 data URI or external URL)
+  isPinned: integer("is_pinned", { mode: "boolean" }).default(false),
+  createdBy: text("created_by"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });
 
 // Admin audit log

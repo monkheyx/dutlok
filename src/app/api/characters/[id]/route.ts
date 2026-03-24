@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   // Only allow specific fields to be updated
-  const allowedFields = ["isMain", "isActive", "raidTeam", "memberId", "role", "notes"];
+  const allowedFields = ["isMain", "isActive", "isRaider", "isRaiderAlt", "raidTeam", "memberId", "role", "notes"];
   const safeUpdates: Record<string, any> = {};
   for (const key of allowedFields) {
     if (key in updates) {

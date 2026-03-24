@@ -127,6 +127,13 @@ sqlite.exec(`
     created_at TEXT DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS spell_icons (
+    spell_id INTEGER PRIMARY KEY,
+    icon_url TEXT NOT NULL,
+    spell_name TEXT,
+    cached_at TEXT
+  );
+
   CREATE TABLE IF NOT EXISTS registrations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character_name TEXT NOT NULL,
