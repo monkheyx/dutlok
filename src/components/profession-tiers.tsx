@@ -17,7 +17,7 @@ interface GroupedProfession {
   oldTiers: ProfTier[];
 }
 
-const CURRENT_EXPANSION_KEYWORDS = ["midnight", "khaz algar"];
+const CURRENT_EXPANSION_KEYWORDS = ["midnight"];
 
 function isCurrent(tierName: string | null): boolean {
   if (!tierName) return false;

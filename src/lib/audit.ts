@@ -329,7 +329,7 @@ export interface ProfessionEntry {
 }
 
 // Current expansion tier name keyword — professions matching this are "current"
-const CURRENT_EXPANSION_KEYWORDS = ["Midnight", "Khaz Algar"];
+const CURRENT_EXPANSION_KEYWORDS = ["Midnight"];
 
 export function getProfessionsAudit(raidersOnly = false, currentExpansionOnly = false): ProfessionEntry[] {
   const characters = db
