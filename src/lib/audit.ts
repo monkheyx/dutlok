@@ -15,8 +15,9 @@ interface EnchantAudit {
   totalMissing: number;
 }
 
-// Slots that should always have enchants
-const ENCHANTABLE_SLOTS = ["BACK", "CHEST", "WRIST", "LEGS", "FEET", "FINGER_1", "FINGER_2", "MAIN_HAND"];
+// Slots that should have enchants in current season (Midnight S1)
+// No back or wrist enchants exist this season
+const ENCHANTABLE_SLOTS = ["CHEST", "LEGS", "FEET", "FINGER_1", "FINGER_2", "MAIN_HAND"];
 
 export function getEnchantGemAudit(): EnchantAudit[] {
   const characters = db
