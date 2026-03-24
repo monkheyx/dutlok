@@ -288,6 +288,14 @@ export default function RaidsPage() {
                   <button type="button" onClick={selectNone} className="text-xs text-muted-foreground hover:underline">Clear</button>
                 </div>
               </div>
+              {characters.length === 0 ? (
+                <div className="bg-secondary/30 border border-border rounded-lg p-6 text-center">
+                  <p className="text-muted-foreground text-sm mb-2">No characters found in the database.</p>
+                  <p className="text-muted-foreground text-xs">
+                    Go to the <a href="/admin" className="text-primary hover:underline">Admin page</a> and click &quot;Import Guild Roster&quot; first, then &quot;Sync All Characters&quot;.
+                  </p>
+                </div>
+              ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 max-h-64 overflow-y-auto">
                 {characters.map((char) => {
                   const isSelected = selectedChars.has(char.id);
@@ -327,11 +335,12 @@ export default function RaidsPage() {
                   );
                 })}
               </div>
+              )}
             </div>
 
             <button
               type="submit"
-              disabled={selectedChars.size === 0}
+              disabled={selectedChars.size === 0 || characters.length === 0}
               className="flex items-center gap-2 bg-primary text-primary-foreground rounded-md py-2 px-4 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               <CheckCircle className="h-4 w-4" />
