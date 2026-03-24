@@ -170,6 +170,7 @@ export function initializeDatabase() {
       character_name TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'present',
       notes TEXT,
+      created_by TEXT,
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -233,6 +234,7 @@ export function initializeDatabase() {
   safeAddColumn("characters", "is_raider_alt", "INTEGER DEFAULT 0");
   safeAddColumn("characters", "notes", "TEXT");
   safeAddColumn("news_posts", "created_by", "TEXT");
+  safeAddColumn("raid_attendance", "created_by", "TEXT");
 
   sqlite.close();
   console.log("[DB] Database initialized at:", resolvedPath);
