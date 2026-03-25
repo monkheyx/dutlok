@@ -1,6 +1,7 @@
 import { getProfessionsAudit } from "@/lib/audit";
 import { Wrench } from "lucide-react";
 import { ProfessionSearch } from "@/components/profession-search";
+import { ProfessionGuides } from "@/components/profession-guides";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,10 @@ export default function ProfessionsPage() {
         </p>
       </div>
 
+      {/* Leveling Guides */}
+      <ProfessionGuides />
+
+      {/* Guild Crafters */}
       <div className="bg-card border border-border rounded-lg p-4">
         {professionsAudit.length > 0 ? (
           <ProfessionSearch professions={professionsAudit} />

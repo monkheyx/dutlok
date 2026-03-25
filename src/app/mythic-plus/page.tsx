@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Timer, Skull, KeyRound } from "lucide-react";
 import { DUNGEONS, getNewDungeons, getLegacyDungeons } from "@/data/dungeons";
+import { IOCalculator } from "@/components/io-calculator";
 
 export default function MythicPlusPage() {
   const newDungeons = getNewDungeons();
@@ -28,6 +29,9 @@ export default function MythicPlusPage() {
           Raid Strategies →
         </Link>
       </div>
+
+      {/* IO Calculator */}
+      <IOCalculator />
 
       {/* New Midnight dungeons */}
       <DungeonSection
