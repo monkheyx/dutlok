@@ -175,20 +175,14 @@ export function IOCalculator() {
 
       setDungeonScores(newScores);
 
-      // Also populate manual levels from the RIO data so user can edit/plan from their current state
+      // Populate manual levels from RIO data — best run goes to Fort, alt to Tyr
+      // (This season uses Xal'atath affixes, not classic Fort/Tyr, so we just split best/alt)
       const newManual: Record<string, { fort: number; tyr: number }> = {};
       for (const d of DUNGEONS) {
         const ds = newScores[d.slug];
-        const bestAffix = ds.best?.affix || "";
-        const altAffix = ds.alt?.affix || "";
-        const bestLevel = ds.best?.mythicLevel || 0;
-        const altLevel = ds.alt?.mythicLevel || 0;
-
-        // Assign to Fort/Tyr based on affix name
-        const isBestFort = bestAffix.toLowerCase().includes("fortif");
         newManual[d.slug] = {
-          fort: isBestFort ? bestLevel : altLevel,
-          tyr: isBestFort ? altLevel : bestLevel,
+          fort: ds.best?.mythicLevel || 0,
+          tyr: ds.alt?.mythicLevel || 0,
         };
       }
       setManualLevels(newManual);
@@ -423,27 +417,33 @@ function LevelInput({ value, color, onChange }: { value: number; color: "green" 
 }
 
 function findDungeonSlug(shortName?: string, fullName?: string): string | null {
+  // Canonical map of all known RIO short names to our slugs (case-insensitive)
+  const SHORT_NAME_MAP: Record<string, string> = {
+    "MT": "magisters-terrace",
+    "MC": "maisara-caverns",
+    "NPX": "nexus-point-xenas",
+    "WS": "windrunner-spire",
+    "AA": "algethar-academy",
+    "POS": "pit-of-saron",
+    "SEAT": "seat-of-the-triumvirate",
+    "SOTT": "seat-of-the-triumvirate",
+    "SR": "skyreach",
+    "SKY": "skyreach",
+  };
+
   if (shortName) {
+    const upper = shortName.toUpperCase();
+    if (SHORT_NAME_MAP[upper]) return SHORT_NAME_MAP[upper];
+    // Also try exact match against our dungeon shortNames
     for (const d of DUNGEONS) {
-      if (d.shortName === shortName) return d.slug;
-    }
-    // Try RIO naming differences
-    for (const [rio, slug] of Object.entries({
-      "MT": "magisters-terrace",
-      "MIST": "maisara-caverns",
-      "NPX": "nexus-point-xenas",
-      "WRS": "windrunner-spire",
-      "AA": "algethar-academy",
-      "POS": "pit-of-saron",
-      "SEAT": "seat-of-the-triumvirate",
-      "SKY": "skyreach",
-    })) {
-      if (shortName.toUpperCase() === rio) return slug;
+      if (d.shortName.toUpperCase() === upper) return d.slug;
     }
   }
+
   if (fullName) {
     const lower = fullName.toLowerCase();
     for (const d of DUNGEONS) {
+      if (d.name.toLowerCase() === lower) return d.slug;
       if (d.name.toLowerCase().includes(lower) || lower.includes(d.name.toLowerCase())) return d.slug;
     }
   }
