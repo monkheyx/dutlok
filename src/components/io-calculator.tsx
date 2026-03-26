@@ -94,11 +94,8 @@ export function IOCalculator() {
     return 30;
   }, [targetRating]);
 
-  // Calculate current rating
+  // Calculate current rating — always from manual levels (pre-filled from RIO when available)
   const currentRating = useMemo(() => {
-    if (!useManual) {
-      return Object.values(dungeonScores).reduce((sum, d) => sum + d.totalScore, 0);
-    }
     return Object.values(manualLevels).reduce((sum, { fort, tyr }) => {
       const fortScore = getBaseScore(fort);
       const tyrScore = getBaseScore(tyr);
@@ -106,7 +103,7 @@ export function IOCalculator() {
       const other = Math.min(fortScore, tyrScore);
       return sum + best * 1.5 + other * 0.5;
     }, 0);
-  }, [useManual, dungeonScores, manualLevels]);
+  }, [manualLevels]);
 
   const remaining = Math.max(0, targetRating - currentRating);
 
@@ -136,11 +133,14 @@ export function IOCalculator() {
       );
 
       for (const run of (data.mythic_plus_best_runs || [])) {
-        const slug = findDungeonSlug(run.dungeon?.short_name, run.dungeon?.name);
+        // RIO format: run.dungeon is a string name, run.short_name is top-level
+        const dungeonName = typeof run.dungeon === "string" ? run.dungeon : run.dungeon?.name || "";
+        const shortName = run.short_name || run.dungeon?.short_name || "";
+        const slug = findDungeonSlug(shortName, dungeonName);
         if (slug && newScores[slug]) {
           newScores[slug].best = {
-            dungeon: run.dungeon?.name || "",
-            shortName: run.dungeon?.short_name || "",
+            dungeon: dungeonName,
+            shortName,
             mythicLevel: run.mythic_level,
             score: run.score,
             affix: run.affixes?.[0]?.name || "",
@@ -150,11 +150,13 @@ export function IOCalculator() {
       }
 
       for (const run of (data.mythic_plus_alternate_runs || [])) {
-        const slug = findDungeonSlug(run.dungeon?.short_name, run.dungeon?.name);
+        const dungeonName = typeof run.dungeon === "string" ? run.dungeon : run.dungeon?.name || "";
+        const shortName = run.short_name || run.dungeon?.short_name || "";
+        const slug = findDungeonSlug(shortName, dungeonName);
         if (slug && newScores[slug]) {
           newScores[slug].alt = {
-            dungeon: run.dungeon?.name || "",
-            shortName: run.dungeon?.short_name || "",
+            dungeon: dungeonName,
+            shortName,
             mythicLevel: run.mythic_level,
             score: run.score,
             affix: run.affixes?.[0]?.name || "",
@@ -172,6 +174,24 @@ export function IOCalculator() {
       }
 
       setDungeonScores(newScores);
+
+      // Also populate manual levels from the RIO data so user can edit/plan from their current state
+      const newManual: Record<string, { fort: number; tyr: number }> = {};
+      for (const d of DUNGEONS) {
+        const ds = newScores[d.slug];
+        const bestAffix = ds.best?.affix || "";
+        const altAffix = ds.alt?.affix || "";
+        const bestLevel = ds.best?.mythicLevel || 0;
+        const altLevel = ds.alt?.mythicLevel || 0;
+
+        // Assign to Fort/Tyr based on affix name
+        const isBestFort = bestAffix.toLowerCase().includes("fortif");
+        newManual[d.slug] = {
+          fort: isBestFort ? bestLevel : altLevel,
+          tyr: isBestFort ? altLevel : bestLevel,
+        };
+      }
+      setManualLevels(newManual);
       setUseManual(false);
     } catch {
       setLookupError("Failed to fetch character data");
@@ -315,77 +335,44 @@ export function IOCalculator() {
               <label className="text-xs text-muted-foreground">
                 {useManual ? "Manual Entry (Fortified / Tyrannical)" : `${playerProfile?.name}'s Runs`}
               </label>
-              {useManual && (
-                <div className="flex gap-2">
-                  <button onClick={() => setAllManual(0)} className="text-[10px] text-muted-foreground hover:text-foreground">Reset</button>
-                  <button onClick={() => setAllManual(evenLevel)} className="text-[10px] text-primary hover:text-primary/80">Set all +{evenLevel}</button>
-                </div>
-              )}
+              <div className="flex gap-2">
+                <button onClick={() => setAllManual(0)} className="text-[10px] text-muted-foreground hover:text-foreground">Reset</button>
+                <button onClick={() => setAllManual(evenLevel)} className="text-[10px] text-primary hover:text-primary/80">Set all +{evenLevel}</button>
+              </div>
             </div>
 
             {/* Headers */}
             <div className="flex items-center gap-2 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
               <span className="w-8 text-center">Key</span>
               <span className="flex-1">Dungeon</span>
-              {useManual ? (
-                <>
-                  <span className="w-[88px] text-center text-green-400/70">Fort</span>
-                  <span className="w-[88px] text-center text-purple-400/70">Tyr</span>
-                </>
-              ) : (
-                <>
-                  <span className="w-16 text-center">Best</span>
-                  <span className="w-16 text-center">Alt</span>
-                </>
-              )}
+              <span className="w-[88px] text-center text-green-400/70">Fort</span>
+              <span className="w-[88px] text-center text-purple-400/70">Tyr</span>
               <span className="w-14 text-right">Score</span>
             </div>
 
             <div className="space-y-1">
               {DUNGEONS.map((d) => {
-                if (useManual) {
-                  const data = manualLevels[d.slug];
-                  const fortScore = getBaseScore(data.fort);
-                  const tyrScore = getBaseScore(data.tyr);
-                  const best = Math.max(fortScore, tyrScore);
-                  const other = Math.min(fortScore, tyrScore);
-                  const score = best * 1.5 + other * 0.5;
-                  const targetPer = targetRating / 8;
-                  const atTarget = score >= targetPer && (data.fort > 0 || data.tyr > 0);
+                const data = manualLevels[d.slug];
+                const fortScore = getBaseScore(data.fort);
+                const tyrScore = getBaseScore(data.tyr);
+                const best = Math.max(fortScore, tyrScore);
+                const other = Math.min(fortScore, tyrScore);
+                const score = best * 1.5 + other * 0.5;
+                const targetPer = targetRating / 8;
+                const atTarget = score >= targetPer && (data.fort > 0 || data.tyr > 0);
 
-                  return (
-                    <div key={d.slug} className={cn("flex items-center gap-2 px-2.5 py-1.5 rounded border text-sm", atTarget ? "bg-green-500/5 border-green-500/20" : "bg-secondary/20 border-border")}>
-                      <span className="w-8 text-[10px] font-bold text-muted-foreground text-center">{d.shortName}</span>
-                      <span className="flex-1 text-xs truncate">{d.name}</span>
-                      <LevelInput value={data.fort} color="green" onChange={(v) => setManualLevel(d.slug, "fort", v)} />
-                      <LevelInput value={data.tyr} color="purple" onChange={(v) => setManualLevel(d.slug, "tyr", v)} />
-                      <span className={cn("w-14 text-right text-xs font-mono", atTarget ? "text-green-400" : "text-muted-foreground")}>
-                        {data.fort > 0 || data.tyr > 0 ? Math.round(score) : "—"}
-                      </span>
-                    </div>
-                  );
-                }
-
-                // Raider.IO data mode
-                const ds = dungeonScores[d.slug];
-                const atTarget = ds.totalScore >= targetRating / 8 && ds.totalScore > 0;
+                // Show RIO actual score if available and different from estimate
+                const rioDs = dungeonScores[d.slug];
+                const hasRioData = !useManual && rioDs.totalScore > 0;
 
                 return (
                   <div key={d.slug} className={cn("flex items-center gap-2 px-2.5 py-1.5 rounded border text-sm", atTarget ? "bg-green-500/5 border-green-500/20" : "bg-secondary/20 border-border")}>
                     <span className="w-8 text-[10px] font-bold text-muted-foreground text-center">{d.shortName}</span>
                     <span className="flex-1 text-xs truncate">{d.name}</span>
-                    <span className="w-16 text-center text-xs">
-                      {ds.best ? (
-                        <span className="text-green-400 font-mono font-bold">+{ds.best.mythicLevel}</span>
-                      ) : <span className="text-muted-foreground/30">—</span>}
-                    </span>
-                    <span className="w-16 text-center text-xs">
-                      {ds.alt ? (
-                        <span className="text-purple-400 font-mono font-bold">+{ds.alt.mythicLevel}</span>
-                      ) : <span className="text-muted-foreground/30">—</span>}
-                    </span>
-                    <span className={cn("w-14 text-right text-xs font-mono", atTarget ? "text-green-400" : ds.totalScore > 0 ? "text-foreground" : "text-muted-foreground")}>
-                      {ds.totalScore > 0 ? Math.round(ds.totalScore) : "—"}
+                    <LevelInput value={data.fort} color="green" onChange={(v) => setManualLevel(d.slug, "fort", v)} />
+                    <LevelInput value={data.tyr} color="purple" onChange={(v) => setManualLevel(d.slug, "tyr", v)} />
+                    <span className={cn("w-14 text-right text-xs font-mono", atTarget ? "text-green-400" : "text-muted-foreground")}>
+                      {data.fort > 0 || data.tyr > 0 ? Math.round(score) : "—"}
                     </span>
                   </div>
                 );
