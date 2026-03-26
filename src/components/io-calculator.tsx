@@ -1,66 +1,32 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Calculator, Target, ChevronDown, ChevronRight } from "lucide-react";
+import { Calculator, ChevronDown, ChevronRight, Search, Loader2, User, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DUNGEONS } from "@/data/dungeons";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Scoring formula from mythicplanner.com
-// Base score per key level (timed run, no bonus/penalty)
+// Raider.IO uses actual scores per run (accounting for key level + time).
+// For the planner/estimator, we use the known base score per key level
+// from Blizzard's in-game system. These match Raider.IO's scoring.
+//
+// Base score = 155 + (level - 2) * 15, with bonuses at breakpoints:
+//   +4, +7, +10, +12 each get an extra +15 bump
+// Per dungeon total: best_affix_score * 1.5 + alt_affix_score * 0.5
 // ═══════════════════════════════════════════════════════════════════════════
-const BASE_SCORES: Record<number, number> = {
-  2: 155, 3: 170, 4: 200, 5: 215, 6: 230, 7: 260, 8: 275, 9: 290,
-  10: 320, 11: 335, 12: 365, 13: 380, 14: 395, 15: 410,
-  16: 425, 17: 440, 18: 455, 19: 470, 20: 485,
-};
-
-// Min/max score bounds per level (overtime penalty floor / speed bonus ceiling)
-const SCORE_BOUNDS: Record<number, { min: number; max: number }> = {
-  2: { min: 125, max: 170 }, 3: { min: 140, max: 185 },
-  4: { min: 170, max: 215 }, 5: { min: 185, max: 230 },
-  6: { min: 200, max: 245 }, 7: { min: 230, max: 275 },
-  8: { min: 245, max: 290 }, 9: { min: 260, max: 305 },
-  10: { min: 290, max: 335 }, 11: { min: 290, max: 350 },
-  12: { min: 290, max: 380 }, 13: { min: 290, max: 395 },
-  14: { min: 290, max: 410 }, 15: { min: 290, max: 425 },
-  16: { min: 290, max: 440 }, 17: { min: 290, max: 455 },
-  18: { min: 290, max: 470 }, 19: { min: 290, max: 485 },
-  20: { min: 290, max: 500 },
-};
-
 function getBaseScore(level: number): number {
-  if (level <= 1) return 0;
-  if (BASE_SCORES[level]) return BASE_SCORES[level];
-  const last = 20;
-  return BASE_SCORES[last] + (level - last) * 15;
+  if (level <= 0) return 0;
+  if (level === 1) return 0;
+  // Base: starts at 155 for +2, +15 per level
+  let score = 155 + (level - 2) * 15;
+  // Breakpoint bonuses: +4, +7, +10, +12 each add +15
+  if (level >= 4) score += 15;
+  if (level >= 7) score += 15;
+  if (level >= 10) score += 15;
+  if (level >= 12) score += 15;
+  return score;
 }
 
-function getMaxScore(level: number): number {
-  if (level <= 1) return 0;
-  if (SCORE_BOUNDS[level]) return SCORE_BOUNDS[level].max;
-  return getBaseScore(level) + 15;
-}
-
-function getMinScore(level: number): number {
-  if (level <= 1) return 0;
-  if (SCORE_BOUNDS[level]) return SCORE_BOUNDS[level].min;
-  return 290; // Floor for high keys
-}
-
-// Per dungeon: best affix * 1.5 + other affix * 0.5
-// Assuming same level on both affixes (Fortified + Tyrannical)
-function getDungeonRatingBothAffixes(level: number): number {
-  const score = getBaseScore(level);
-  return score * 1.5 + score * 0.5; // = score * 2.0
-}
-
-// If only one affix completed
-function getDungeonRatingOneAffix(level: number): number {
-  return getBaseScore(level) * 1.5;
-}
-
-// Preset targets with achievement names
 const PRESETS = [
   { label: "Keystone Explorer", rating: 750, color: "text-green-400" },
   { label: "Keystone Conqueror", rating: 1500, color: "text-blue-400" },
@@ -69,55 +35,168 @@ const PRESETS = [
   { label: "Keystone Legend", rating: 3000, color: "text-red-400" },
 ];
 
-interface DungeonEntry {
-  slug: string;
-  fortLevel: number;
-  tyrLevel: number;
+interface RunData {
+  dungeon: string;
+  shortName: string;
+  mythicLevel: number;
+  score: number;
+  affix: string;
+  url?: string;
 }
+
+interface DungeonScores {
+  best: RunData | null;
+  alt: RunData | null;
+  totalScore: number;
+}
+
+// Map RIO dungeon short names to our slugs
+const RIO_SHORT_NAME_MAP: Record<string, string> = {
+  "MT": "magisters-terrace",
+  "MC": "maisara-caverns",
+  "NPX": "nexus-point-xenas",
+  "WS": "windrunner-spire",
+  "AA": "algethar-academy",
+  "PoS": "pit-of-saron",
+  "SotT": "seat-of-the-triumvirate",
+  "SR": "skyreach",
+};
 
 export function IOCalculator() {
   const [targetRating, setTargetRating] = useState(2000);
   const [expanded, setExpanded] = useState(false);
-  const [dungeonData, setDungeonData] = useState<Record<string, { fort: number; tyr: number }>>(
+
+  // Player lookup
+  const [playerName, setPlayerName] = useState("");
+  const [playerRealm, setPlayerRealm] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState("");
+  const [playerProfile, setPlayerProfile] = useState<any>(null);
+
+  // Dungeon scores - either from lookup or manual
+  const [dungeonScores, setDungeonScores] = useState<Record<string, DungeonScores>>(
+    Object.fromEntries(DUNGEONS.map((d) => [d.slug, { best: null, alt: null, totalScore: 0 }]))
+  );
+
+  // Manual input mode (when no player lookup)
+  const [manualLevels, setManualLevels] = useState<Record<string, { fort: number; tyr: number }>>(
     Object.fromEntries(DUNGEONS.map((d) => [d.slug, { fort: 0, tyr: 0 }]))
   );
+
+  const [useManual, setUseManual] = useState(true);
 
   // What even key level on both affixes across all 8 dungeons gets target
   const evenLevel = useMemo(() => {
     for (let level = 2; level <= 30; level++) {
-      if (getDungeonRatingBothAffixes(level) * 8 >= targetRating) return level;
+      const perDungeon = getBaseScore(level) * 1.5 + getBaseScore(level) * 0.5;
+      if (perDungeon * 8 >= targetRating) return level;
     }
     return 30;
   }, [targetRating]);
 
-  // Calculate current rating from inputs
+  // Calculate current rating
   const currentRating = useMemo(() => {
-    return Object.values(dungeonData).reduce((sum, { fort, tyr }) => {
-      if (fort === 0 && tyr === 0) return sum;
+    if (!useManual) {
+      return Object.values(dungeonScores).reduce((sum, d) => sum + d.totalScore, 0);
+    }
+    return Object.values(manualLevels).reduce((sum, { fort, tyr }) => {
       const fortScore = getBaseScore(fort);
       const tyrScore = getBaseScore(tyr);
       const best = Math.max(fortScore, tyrScore);
       const other = Math.min(fortScore, tyrScore);
       return sum + best * 1.5 + other * 0.5;
     }, 0);
-  }, [dungeonData]);
+  }, [useManual, dungeonScores, manualLevels]);
 
   const remaining = Math.max(0, targetRating - currentRating);
 
-  function setLevel(slug: string, affix: "fort" | "tyr", value: number) {
-    setDungeonData((prev) => ({
+  async function lookupPlayer() {
+    if (!playerName.trim() || !playerRealm.trim()) {
+      setLookupError("Enter both character name and realm");
+      return;
+    }
+    setLookupLoading(true);
+    setLookupError("");
+
+    try {
+      const res = await fetch(`/api/raiderio?region=us&realm=${encodeURIComponent(playerRealm)}&name=${encodeURIComponent(playerName)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setLookupError(data.error || "Character not found");
+        setLookupLoading(false);
+        return;
+      }
+
+      setPlayerProfile(data);
+
+      // Build dungeon scores from best runs + alternate runs
+      const newScores: Record<string, DungeonScores> = Object.fromEntries(
+        DUNGEONS.map((d) => [d.slug, { best: null, alt: null, totalScore: 0 }])
+      );
+
+      for (const run of (data.mythic_plus_best_runs || [])) {
+        const slug = findDungeonSlug(run.dungeon?.short_name, run.dungeon?.name);
+        if (slug && newScores[slug]) {
+          newScores[slug].best = {
+            dungeon: run.dungeon?.name || "",
+            shortName: run.dungeon?.short_name || "",
+            mythicLevel: run.mythic_level,
+            score: run.score,
+            affix: run.affixes?.[0]?.name || "",
+            url: run.url,
+          };
+        }
+      }
+
+      for (const run of (data.mythic_plus_alternate_runs || [])) {
+        const slug = findDungeonSlug(run.dungeon?.short_name, run.dungeon?.name);
+        if (slug && newScores[slug]) {
+          newScores[slug].alt = {
+            dungeon: run.dungeon?.name || "",
+            shortName: run.dungeon?.short_name || "",
+            mythicLevel: run.mythic_level,
+            score: run.score,
+            affix: run.affixes?.[0]?.name || "",
+            url: run.url,
+          };
+        }
+      }
+
+      // Calculate per-dungeon totals
+      for (const slug of Object.keys(newScores)) {
+        const d = newScores[slug];
+        const bestScore = d.best?.score || 0;
+        const altScore = d.alt?.score || 0;
+        d.totalScore = Math.max(bestScore, altScore) * 1.5 + Math.min(bestScore, altScore) * 0.5;
+      }
+
+      setDungeonScores(newScores);
+      setUseManual(false);
+    } catch {
+      setLookupError("Failed to fetch character data");
+    }
+    setLookupLoading(false);
+  }
+
+  function clearLookup() {
+    setPlayerProfile(null);
+    setUseManual(true);
+    setDungeonScores(Object.fromEntries(DUNGEONS.map((d) => [d.slug, { best: null, alt: null, totalScore: 0 }])));
+  }
+
+  function setManualLevel(slug: string, affix: "fort" | "tyr", value: number) {
+    setManualLevels((prev) => ({
       ...prev,
       [slug]: { ...prev[slug], [affix]: Math.max(0, Math.min(30, value)) },
     }));
   }
 
-  function setAllToLevel(level: number) {
-    setDungeonData(Object.fromEntries(DUNGEONS.map((d) => [d.slug, { fort: level, tyr: level }])));
+  function setAllManual(level: number) {
+    setManualLevels(Object.fromEntries(DUNGEONS.map((d) => [d.slug, { fort: level, tyr: level }])));
   }
 
-  function resetAll() {
-    setDungeonData(Object.fromEntries(DUNGEONS.map((d) => [d.slug, { fort: 0, tyr: 0 }])));
-  }
+  const rioScore = playerProfile?.mythic_plus_scores_by_season?.[0]?.scores?.all || 0;
 
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
@@ -135,6 +214,59 @@ export function IOCalculator() {
 
       {expanded && (
         <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
+          {/* Player Lookup */}
+          <div className="bg-secondary/30 border border-border rounded-lg p-3">
+            <h4 className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground mb-2 flex items-center gap-1.5">
+              <User className="h-3 w-3" />
+              Load from Raider.IO
+            </h4>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Character name"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && lookupPlayer()}
+                className="flex-1 bg-secondary border border-border rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <input
+                type="text"
+                placeholder="Realm (e.g. area-52)"
+                value={playerRealm}
+                onChange={(e) => setPlayerRealm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && lookupPlayer()}
+                className="flex-1 bg-secondary border border-border rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <button
+                onClick={lookupPlayer}
+                disabled={lookupLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-50"
+              >
+                {lookupLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
+                Lookup
+              </button>
+            </div>
+            {lookupError && <p className="text-xs text-red-400 mt-1">{lookupError}</p>}
+            {playerProfile && !useManual && (
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center gap-2">
+                  {playerProfile.thumbnail_url && (
+                    <img src={playerProfile.thumbnail_url} alt="" className="w-6 h-6 rounded-full" />
+                  )}
+                  <span className="text-xs font-medium">{playerProfile.name}</span>
+                  <span className="text-xs text-muted-foreground">{playerProfile.realm}</span>
+                  <span className="text-xs text-muted-foreground">— RIO: {rioScore}</span>
+                  {playerProfile.profile_url && (
+                    <a href={playerProfile.profile_url} target="_blank" rel="noopener noreferrer" className="text-primary">
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+                <button onClick={clearLookup} className="text-[10px] text-muted-foreground hover:text-foreground">Switch to manual</button>
+              </div>
+            )}
+          </div>
+
           {/* Target selector */}
           <div>
             <label className="text-xs text-muted-foreground mb-2 block">Target Rating</label>
@@ -146,7 +278,7 @@ export function IOCalculator() {
                   className={cn(
                     "px-2.5 py-1 rounded text-xs font-medium border transition-all",
                     targetRating === p.rating
-                      ? `bg-primary/15 border-primary/40 text-primary`
+                      ? "bg-primary/15 border-primary/40 text-primary"
                       : "bg-secondary border-border text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -155,11 +287,7 @@ export function IOCalculator() {
               ))}
             </div>
             <input
-              type="range"
-              min={500}
-              max={4000}
-              step={25}
-              value={targetRating}
+              type="range" min={500} max={4000} step={25} value={targetRating}
               onChange={(e) => setTargetRating(Number(e.target.value))}
               className="w-full accent-primary"
             />
@@ -177,72 +305,87 @@ export function IOCalculator() {
               <strong className="text-primary">+{evenLevel}</strong> on both Fortified & Tyrannical.
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Formula: Best affix score × 1.5 + Other affix × 0.5, summed across all dungeons.
+              Per dungeon: best affix × 1.5 + other affix × 0.5. Base +2 = 155, +15 per level, bonuses at +4/+7/+10/+12.
             </p>
           </div>
 
-          {/* Per-dungeon breakdown with Fort/Tyr split */}
+          {/* Dungeon breakdown */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-muted-foreground">Your Keys (Fortified / Tyrannical)</label>
-              <div className="flex gap-2">
-                <button onClick={resetAll} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">Reset</button>
-                <button onClick={() => setAllToLevel(evenLevel)} className="text-[10px] text-primary hover:text-primary/80 transition-colors">Set all +{evenLevel}</button>
-              </div>
+              <label className="text-xs text-muted-foreground">
+                {useManual ? "Manual Entry (Fortified / Tyrannical)" : `${playerProfile?.name}'s Runs`}
+              </label>
+              {useManual && (
+                <div className="flex gap-2">
+                  <button onClick={() => setAllManual(0)} className="text-[10px] text-muted-foreground hover:text-foreground">Reset</button>
+                  <button onClick={() => setAllManual(evenLevel)} className="text-[10px] text-primary hover:text-primary/80">Set all +{evenLevel}</button>
+                </div>
+              )}
             </div>
 
-            {/* Column headers */}
+            {/* Headers */}
             <div className="flex items-center gap-2 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
               <span className="w-8 text-center">Key</span>
               <span className="flex-1">Dungeon</span>
-              <span className="w-[88px] text-center text-green-400/70">Fort</span>
-              <span className="w-[88px] text-center text-purple-400/70">Tyr</span>
+              {useManual ? (
+                <>
+                  <span className="w-[88px] text-center text-green-400/70">Fort</span>
+                  <span className="w-[88px] text-center text-purple-400/70">Tyr</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-16 text-center">Best</span>
+                  <span className="w-16 text-center">Alt</span>
+                </>
+              )}
               <span className="w-14 text-right">Score</span>
             </div>
 
             <div className="space-y-1">
               {DUNGEONS.map((d) => {
-                const data = dungeonData[d.slug];
-                const fortScore = getBaseScore(data.fort);
-                const tyrScore = getBaseScore(data.tyr);
-                const best = Math.max(fortScore, tyrScore);
-                const other = Math.min(fortScore, tyrScore);
-                const dungeonScore = best * 1.5 + other * 0.5;
-                const targetPerDungeon = targetRating / 8;
-                const atTarget = dungeonScore >= targetPerDungeon && (data.fort > 0 || data.tyr > 0);
+                if (useManual) {
+                  const data = manualLevels[d.slug];
+                  const fortScore = getBaseScore(data.fort);
+                  const tyrScore = getBaseScore(data.tyr);
+                  const best = Math.max(fortScore, tyrScore);
+                  const other = Math.min(fortScore, tyrScore);
+                  const score = best * 1.5 + other * 0.5;
+                  const targetPer = targetRating / 8;
+                  const atTarget = score >= targetPer && (data.fort > 0 || data.tyr > 0);
+
+                  return (
+                    <div key={d.slug} className={cn("flex items-center gap-2 px-2.5 py-1.5 rounded border text-sm", atTarget ? "bg-green-500/5 border-green-500/20" : "bg-secondary/20 border-border")}>
+                      <span className="w-8 text-[10px] font-bold text-muted-foreground text-center">{d.shortName}</span>
+                      <span className="flex-1 text-xs truncate">{d.name}</span>
+                      <LevelInput value={data.fort} color="green" onChange={(v) => setManualLevel(d.slug, "fort", v)} />
+                      <LevelInput value={data.tyr} color="purple" onChange={(v) => setManualLevel(d.slug, "tyr", v)} />
+                      <span className={cn("w-14 text-right text-xs font-mono", atTarget ? "text-green-400" : "text-muted-foreground")}>
+                        {data.fort > 0 || data.tyr > 0 ? Math.round(score) : "—"}
+                      </span>
+                    </div>
+                  );
+                }
+
+                // Raider.IO data mode
+                const ds = dungeonScores[d.slug];
+                const atTarget = ds.totalScore >= targetRating / 8 && ds.totalScore > 0;
 
                 return (
-                  <div
-                    key={d.slug}
-                    className={cn(
-                      "flex items-center gap-2 px-2.5 py-1.5 rounded border text-sm",
-                      atTarget ? "bg-green-500/5 border-green-500/20" : "bg-secondary/20 border-border"
-                    )}
-                  >
+                  <div key={d.slug} className={cn("flex items-center gap-2 px-2.5 py-1.5 rounded border text-sm", atTarget ? "bg-green-500/5 border-green-500/20" : "bg-secondary/20 border-border")}>
                     <span className="w-8 text-[10px] font-bold text-muted-foreground text-center">{d.shortName}</span>
                     <span className="flex-1 text-xs truncate">{d.name}</span>
-
-                    {/* Fortified */}
-                    <div className="flex items-center gap-0.5 w-[88px] justify-center">
-                      <button onClick={() => setLevel(d.slug, "fort", data.fort - 1)} className="w-5 h-5 rounded bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center text-[10px]">−</button>
-                      <span className={cn("w-7 text-center text-xs font-mono", data.fort > 0 ? "text-green-400 font-bold" : "text-muted-foreground/30")}>
-                        {data.fort > 0 ? `+${data.fort}` : "—"}
-                      </span>
-                      <button onClick={() => setLevel(d.slug, "fort", data.fort + 1)} className="w-5 h-5 rounded bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center text-[10px]">+</button>
-                    </div>
-
-                    {/* Tyrannical */}
-                    <div className="flex items-center gap-0.5 w-[88px] justify-center">
-                      <button onClick={() => setLevel(d.slug, "tyr", data.tyr - 1)} className="w-5 h-5 rounded bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center text-[10px]">−</button>
-                      <span className={cn("w-7 text-center text-xs font-mono", data.tyr > 0 ? "text-purple-400 font-bold" : "text-muted-foreground/30")}>
-                        {data.tyr > 0 ? `+${data.tyr}` : "—"}
-                      </span>
-                      <button onClick={() => setLevel(d.slug, "tyr", data.tyr + 1)} className="w-5 h-5 rounded bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center text-[10px]">+</button>
-                    </div>
-
-                    {/* Score */}
-                    <span className={cn("w-14 text-right text-xs font-mono", atTarget ? "text-green-400" : "text-muted-foreground")}>
-                      {data.fort > 0 || data.tyr > 0 ? Math.round(dungeonScore) : "—"}
+                    <span className="w-16 text-center text-xs">
+                      {ds.best ? (
+                        <span className="text-green-400 font-mono font-bold">+{ds.best.mythicLevel}</span>
+                      ) : <span className="text-muted-foreground/30">—</span>}
+                    </span>
+                    <span className="w-16 text-center text-xs">
+                      {ds.alt ? (
+                        <span className="text-purple-400 font-mono font-bold">+{ds.alt.mythicLevel}</span>
+                      ) : <span className="text-muted-foreground/30">—</span>}
+                    </span>
+                    <span className={cn("w-14 text-right text-xs font-mono", atTarget ? "text-green-400" : ds.totalScore > 0 ? "text-foreground" : "text-muted-foreground")}>
+                      {ds.totalScore > 0 ? Math.round(ds.totalScore) : "—"}
                     </span>
                   </div>
                 );
@@ -250,7 +393,7 @@ export function IOCalculator() {
             </div>
           </div>
 
-          {/* Summary bar */}
+          {/* Progress bar */}
           <div className="bg-secondary/30 border border-border rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-muted-foreground">Progress</span>
@@ -260,10 +403,7 @@ export function IOCalculator() {
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
               <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  currentRating >= targetRating ? "bg-green-500" : "bg-primary"
-                )}
+                className={cn("h-full rounded-full transition-all", currentRating >= targetRating ? "bg-green-500" : "bg-primary")}
                 style={{ width: `${Math.min(100, (currentRating / targetRating) * 100)}%` }}
               />
             </div>
@@ -272,9 +412,7 @@ export function IOCalculator() {
                 {remaining === 0 ? "Target reached!" : `${Math.round(remaining)} remaining`}
               </span>
               {currentRating > 0 && (
-                <span className="text-[10px] text-muted-foreground">
-                  {Math.round((currentRating / targetRating) * 100)}%
-                </span>
+                <span className="text-[10px] text-muted-foreground">{Math.round((currentRating / targetRating) * 100)}%</span>
               )}
             </div>
           </div>
@@ -282,4 +420,45 @@ export function IOCalculator() {
       )}
     </div>
   );
+}
+
+function LevelInput({ value, color, onChange }: { value: number; color: "green" | "purple"; onChange: (v: number) => void }) {
+  const colorClass = color === "green" ? "text-green-400" : "text-purple-400";
+  return (
+    <div className="flex items-center gap-0.5 w-[88px] justify-center">
+      <button onClick={() => onChange(value - 1)} className="w-5 h-5 rounded bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center text-[10px]">−</button>
+      <span className={cn("w-7 text-center text-xs font-mono", value > 0 ? `${colorClass} font-bold` : "text-muted-foreground/30")}>
+        {value > 0 ? `+${value}` : "—"}
+      </span>
+      <button onClick={() => onChange(value + 1)} className="w-5 h-5 rounded bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center text-[10px]">+</button>
+    </div>
+  );
+}
+
+function findDungeonSlug(shortName?: string, fullName?: string): string | null {
+  if (shortName) {
+    for (const d of DUNGEONS) {
+      if (d.shortName === shortName) return d.slug;
+    }
+    // Try RIO naming differences
+    for (const [rio, slug] of Object.entries({
+      "MT": "magisters-terrace",
+      "MIST": "maisara-caverns",
+      "NPX": "nexus-point-xenas",
+      "WRS": "windrunner-spire",
+      "AA": "algethar-academy",
+      "POS": "pit-of-saron",
+      "SEAT": "seat-of-the-triumvirate",
+      "SKY": "skyreach",
+    })) {
+      if (shortName.toUpperCase() === rio) return slug;
+    }
+  }
+  if (fullName) {
+    const lower = fullName.toLowerCase();
+    for (const d of DUNGEONS) {
+      if (d.name.toLowerCase().includes(lower) || lower.includes(d.name.toLowerCase())) return d.slug;
+    }
+  }
+  return null;
 }
