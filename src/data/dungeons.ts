@@ -39,7 +39,7 @@ export const DUNGEONS: Dungeon[] = [
     bosses: [
       {
         name: "Arcanotron Custos",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149081.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1260122-arcanotron-custos.jpg",
         mechanics: [
           "**Arcane Expulsion** — AoE knockback + drops a persistent puddle under the boss for 2 minutes. Reposition boss after each cast to avoid stacking puddles",
           "**Ethereal Shackles** — roots 2 random players in place. Requires **Magic dispel** or freedom effect to remove",
@@ -52,7 +52,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Seranel Sunlash",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149082.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1260123-seranel-sunlash.jpg",
         mechanics: [
           "**Suppression Zone** — boss drops a zone underneath himself. Players MUST be inside to clear debuffs",
           "**Runic Mark** — debuff applied to players that must be cleared by entering the Suppression Zone",
@@ -66,7 +66,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Gemellus",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149083.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1260125-gemellus.jpg",
         mechanics: [
           "**Triplicate** — at pull and at 50% HP, boss splits into 3 clones that share a health pool. Cleave all 3 to damage efficiently",
           "**Neural Link** — debuff tethering you to a specific clone. Run to that clone and touch it to remove both your debuff and the clone's shield",
@@ -78,7 +78,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Degentrius",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149084.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1260126-degentrius.jpg",
         mechanics: [
           "**Void Torrent** — beam splits the arena in half. Players must position on both sides for soaks",
           "**Unstable Void Essence** — soak circles that appear on both sides of the beam. Must be soaked by players on that side or they explode",
@@ -114,7 +114,7 @@ export const DUNGEONS: Dungeon[] = [
     bosses: [
       {
         name: "Muro'jin & Nekraxx",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149090.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1261458-murojin.jpg",
         mechanics: [
           "**Revive Pet** — Muro'jin will revive Nekraxx when she dies. **Bestial Wrath** — Nekraxx gains stacking damage buff when Muro'jin dies. Kill evenly",
           "**Freezing Trap** — ice traps on the ground. During **Carrion Swoop**, lure Nekraxx into a trap to stun her",
@@ -129,7 +129,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Vordaza",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149091.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1261461-vordaza.jpg",
         mechanics: [
           "**Wrest Phantoms** — spawns phantom adds that need to be kited into each other to collide and explode. Stagger detonations — wait for the DoT from the first pair to expire before triggering the second",
           "**Withering Miasma** — constant passive group damage throughout the fight. Healers must pace mana",
@@ -142,7 +142,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Rak'tul, Vessel of Souls",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149092.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1261462-raktul.jpg",
         mechanics: [
           "**Spiritbreaker** — launches tank into air, pummels with physical hits, then delivers empowered shadow blow. The final impact leaves **Spectral Decay** patches. Use strongest defensive CDs",
           "**Crush Souls** — boss leaps and slams repeatedly, planting **Soulbind Totems** that pull nearby players. Run away from totems as they spawn",
@@ -177,7 +177,7 @@ export const DUNGEONS: Dungeon[] = [
     bosses: [
       {
         name: "Chief Corewright Kasreth",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149100.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1263324-kasreth.jpg",
         mechanics: [
           "**Leyline Array** — beams shoot across the room. AVOID unless you have **Reflux Charge** debuff — then stand at beam intersections to disable them",
           "**Flux Collapse** — bait puddles toward room edges. Applies healing absorb + knockback",
@@ -190,7 +190,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Corewarden Nysarra",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149101.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1262215-corewarden-nysarra.jpg",
         mechanics: [
           "**Null Vanguard** — spawns a **Dreadflail** add + 2 **Grand Nullifiers**. Interrupt ALL Nullify casts or adds become empowered",
           "**Lightscar Flare** — creates a light frontal. Stand in it for **300% damage amplification**. Kill adds before channel ends. **Devour The Unworthy** consumes remaining adds when flare ends",
@@ -203,7 +203,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Lothraxion",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149102.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1262217-lothraxion.jpg",
         mechanics: [
           "**Searing Rend** — tank puddle that persists the **entire fight**. Drop at room edges — they never despawn",
           "**Brilliant Dispersion** — targets 3 players, each spawning 2 **Fractured Images**. Spread to avoid cleaving allies. Images deal **Mirrored Rend** to nearby players and dash around via **Flicker**",
@@ -237,7 +237,7 @@ export const DUNGEONS: Dungeon[] = [
     bosses: [
       {
         name: "Emberdawn",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149110.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1263239-emberdawn.jpg",
         mechanics: [
           "**Flaming Updraft** — debuffs 2 players. Move to the absolute outside edge of the arena to drop puddles. Puddles persist and spawn **Flaming Twisters**",
           "**Burning Gale** (intermission at 100 energy) — boss flies up, pulls all players toward center, rotates, and breathes **Fire Breath** counter-clockwise starting on tank",
@@ -249,7 +249,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Derelict Duo (Kalis & Latch)",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149111.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1263238-kalis.jpg",
         mechanics: [
           "Cleave bosses evenly — remaining boss gains **Broken Bond** stacking damage buff when partner dies",
           "**Shadow Bolt** (Kalis) — must be interrupted consistently. Assign a kick rotation",
@@ -264,7 +264,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Commander Kroluk",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149112.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1263243-commander-kroluk.jpg",
         mechanics: [
           "**Reckless Leap** — targets the furthest player. Coordinate: one designated player uses a defensive first, then tank soaks second leap",
           "**Rampage** — tank channel requiring defensive cooldown",
@@ -276,7 +276,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "The Restless Heart",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149113.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1263245-restless-heart.jpg",
         mechanics: [
           "**Squall Leap** — boss leaps dealing Nature damage and applying a **stacking DoT with no timer**. Stacks removed ONLY by touching **Turbulent Arrows** from Arrow Rain",
           "**Arrow Rain** — shoots arrows that form **Turbulent Arrows** on the ground. Touch them to remove Squall Leap stacks. Detonation knocks you up",
@@ -317,7 +317,7 @@ export const DUNGEONS: Dungeon[] = [
     bosses: [
       {
         name: "Forgemaster Garfrost",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149120.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/147171-forgemaster-garfrost.jpg",
         mechanics: [
           "**Throw Saronite** — targets 2 players with circles. Don't overlap circles and avoid cleaving allies. Creates destructible **Ore Chunks** on impact",
           "**Orebreaker** — tank-targeted AoE that **stuns for 8 seconds** unless tank overlaps with an Ore Chunk to destroy it",
@@ -331,7 +331,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Ick and Krick",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149121.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/147172-ick.jpg",
         mechanics: [
           "**Shade Shift** — creates 2 **Shades of Krick** adds nearby. Tank drags boss to them for cleave. Interrupt **Death Bolt** from adds (random target). Dispel **curse** debuffs",
           "**Blight Smash** — tank hit creating a puddle. Move boss out of it",
@@ -345,7 +345,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Scourgelord Tyrannus",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149122.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/432790-scourgelord-tyrannus-scourgelord-tyrannus-after-patch-6-0.jpg",
         mechanics: [
           "**Rime Blast** — targets each non-tank player once per phase. Aim the projectile at **Bone Piles** (marked with green light pillars) to prevent empowered adds from spawning",
           "**Army Of The Dead** — activates remaining Bone Piles spawning **Rotlings** (stacking disease on tank) and **Plaguespreaders** (heavy group damage + interruptible **Plague Bolt**)",
@@ -382,7 +382,7 @@ export const DUNGEONS: Dungeon[] = [
     bosses: [
       {
         name: "Zuraal the Ascended",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149130.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/674585-zuraal-the-ascended.jpg",
         mechanics: [
           "**Decimate** — targets random player, boss leaps to them creating a puddle. Move to edge before impact",
           "**Void Slash** — tank combo requiring defensive cooldown. Heavy physical damage",
@@ -396,7 +396,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Saprish",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149131.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/674586-saprish.jpg",
         mechanics: [
           "**Void Bomb** — spawned hazards around the arena. Avoid or soak strategically",
           "**Phase Dash** — boss dashes through the arena. Creates damage circles — use to cleave Void Bombs",
@@ -410,7 +410,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Viceroy Nezhar",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149132.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/674589-viceroy-nezhar.jpg",
         mechanics: [
           "**Gates of the Abyss** — spawns **Umbral Waves** hazards that move across the arena. Dodge between them",
           "**Mass Void Infusion** — targets 3 players with void orbs. Spread to avoid overlapping damage",
@@ -424,7 +424,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "L'ura",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149133.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1004407-lura.jpg",
         mechanics: [
           "**Dirge of Despair** — group hit that spawns 6 **Notes of Despair** around the arena",
           "**Discordant Beam** — players gain a beam that shoots at active Notes to silence them. Aim carefully",
@@ -462,7 +462,7 @@ export const DUNGEONS: Dungeon[] = [
     bosses: [
       {
         name: "Ranjit",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149140.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1273991-ranjit.jpg",
         mechanics: [
           "**Gale Surge** — creates wind orbs that knock players. Position to avoid being pushed off the platform (instant death)",
           "**Fan Of Blades** — bleeding applied to all players. Requires healing CDs or bleed removal abilities",
@@ -475,7 +475,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Araknath",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149141.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1273992-araknath.jpg",
         mechanics: [
           "**Energize** — 3 beams from Lesser Constructs constantly point at the boss, healing him and building damage stacks. **Non-tank players must stand in beams** to intercept using personals. If beams connect, fight becomes unkillable",
           "**Blast Wave** — prevented by tank staying in melee range at all times",
@@ -490,7 +490,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Rukhran",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149142.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/455577-rukhran.jpg",
         mechanics: [
           "**Sunbreak** — summons a **Sunwing** add with **Burning Pursuit** fixate. Kill away from eggs or they hatch",
           "**Searing Quills** — raid-wide damage. Hide behind the central pillar to avoid",
@@ -503,7 +503,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "High Sage Viryx",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149143.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/435229-high-sage-viryx.jpg",
         mechanics: [
           "**Scorching Ray** — targets 3 players for heavy sustained damage. Spread and use personals",
           "**Cast Down** — pulls random player toward platform edge. **Run toward entrance/center** to maximize distance. If pulled off = instant death",
@@ -539,7 +539,7 @@ export const DUNGEONS: Dungeon[] = [
     bosses: [
       {
         name: "Overgrown Ancient",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149150.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1180066-overgrown-ancient.jpg",
         mechanics: [
           "**Germinate** — channels to spawn **Ancient Branch** adds. Keep adds stacked for cleave. Interrupt **Healing Touch** from branches immediately",
           "**Splinterbark** — bleed debuff on players. Standing in **Abundance** circle (created when adds die) cleanses it",
@@ -552,7 +552,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Crawth",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149151.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1180067-crawth.jpg",
         mechanics: [
           "**Savage Peck** — tank hit with a DoT (NOT a bleed). Use defensive for every hit",
           "**Overpowering Gust** — random-target frontal. Sidestep immediately",
@@ -567,7 +567,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Vexamus",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149152.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1180068-vexamus.jpg",
         mechanics: [
           "**Arcane Orbs** — 5 spawn and move toward boss. Spread and **soak before they reach boss** or he gains **Oversurge** stacking buff. Each soak applies **Oversurge** debuff to soaker — limits how many one person can take",
           "**Arcane Expulsion** — tank frontal. Point away from group and use defensive",
@@ -580,7 +580,7 @@ export const DUNGEONS: Dungeon[] = [
       },
       {
         name: "Echo of Doragosa",
-        image: "https://wow.zamimg.com/uploads/screenshots/normal/1149153.jpg",
+        image: "https://wow.zamimg.com/uploads/screenshots/normal/1166427-echo-of-doragosa.jpg",
         mechanics: [
           "**Unleash Energy** — immediate cast on pull. Pull boss toward entrance to avoid **Arcane Rifts** spawning in bad spots",
           "**Overwhelming Power** — stacking debuff from any boss hit. At **3 stacks** creates an Arcane Rift under you. Manage stacks by avoiding unnecessary damage",
