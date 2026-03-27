@@ -112,6 +112,13 @@ export default function DungeonGuidePage({ params }: Props) {
             </div>
 
             <div className="px-4 py-3 space-y-3">
+              {/* Boss image */}
+              {boss.image && (
+                <div className="rounded-lg overflow-hidden border border-border bg-black max-h-48">
+                  <img src={boss.image} alt={boss.name} className="w-full object-cover max-h-48" />
+                </div>
+              )}
+
               {/* Mechanics */}
               <div className="space-y-2">
                 {boss.mechanics.map((mech, j) => (

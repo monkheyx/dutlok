@@ -19,6 +19,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "render-eu.worldofwarcraft.com",
       },
+      {
+        protocol: "https",
+        hostname: "wow.zamimg.com",
+      },
     ],
   },
 };
