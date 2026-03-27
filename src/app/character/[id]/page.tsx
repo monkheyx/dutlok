@@ -40,33 +40,33 @@ export default function CharacterDetailPage({ params }: Props) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <Link
-            href="/roster"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 mb-2"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Roster
-          </Link>
+      <div className="space-y-3">
+        <Link
+          href="/roster"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Roster
+        </Link>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="flex items-center gap-3">
             {character.avatarUrl && (
               <img
                 src={character.avatarUrl}
                 alt=""
-                className="w-16 h-16 rounded-full border-2"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 flex-shrink-0"
                 style={{ borderColor: classColor }}
               />
             )}
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold" style={{ color: classColor }}>
+                <h1 className="text-xl sm:text-3xl font-bold" style={{ color: classColor }}>
                   {character.name}
                 </h1>
                 {character.isMain && (
-                  <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 fill-yellow-500" />
                 )}
               </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
                 <span>{character.realm}</span>
                 <span>{character.faction}</span>
                 <span>{character.race}</span>
@@ -74,11 +74,11 @@ export default function CharacterDetailPage({ params }: Props) {
               </div>
             </div>
           </div>
-        </div>
-        <div className="text-right text-sm text-muted-foreground">
-          <div>Last synced: {timeAgo(character.lastSyncedAt)}</div>
-          {member && <div>Player: {member.name}</div>}
-          {character.raidTeam && <div>Team: {character.raidTeam}</div>}
+          <div className="text-xs sm:text-sm text-muted-foreground sm:text-right">
+            <div>Last synced: {timeAgo(character.lastSyncedAt)}</div>
+            {member && <div>Player: {member.name}</div>}
+            {character.raidTeam && <div>Team: {character.raidTeam}</div>}
+          </div>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export default function CharacterDetailPage({ params }: Props) {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
         <StatCard label="Item Level" value={character.equippedItemLevel ?? character.itemLevel ?? "-"} icon={Shield} />
         <StatCard label="Level" value={character.level ?? "-"} />
         <StatCard label="Role" value={<RoleBadge role={character.role} /> as any} />

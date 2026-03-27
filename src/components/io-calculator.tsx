@@ -161,18 +161,18 @@ export function IOCalculator() {
               <User className="h-3 w-3" />
               Load from Raider.IO
             </h4>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <input
                 type="text" placeholder="Character"
                 value={playerName} onChange={(e) => setPlayerName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && lookupPlayer()}
-                className="flex-1 bg-secondary border border-border rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                className="flex-1 min-w-[100px] bg-secondary border border-border rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <input
                 type="text" placeholder="Realm (e.g. eredar)"
                 value={playerRealm} onChange={(e) => setPlayerRealm(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && lookupPlayer()}
-                className="flex-1 bg-secondary border border-border rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                className="flex-1 min-w-[100px] bg-secondary border border-border rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <button
                 onClick={lookupPlayer} disabled={lookupLoading}
@@ -244,12 +244,12 @@ export function IOCalculator() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-              <span className="w-8 text-center">ID</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+              <span className="w-7 sm:w-8 text-center">ID</span>
               <span className="flex-1">Dungeon</span>
-              <span className="w-[88px] text-center">Key Level</span>
-              <span className="w-16 text-right">Score</span>
-              <span className="w-16 text-right">Need</span>
+              <span className="w-[80px] sm:w-[88px] text-center">Key</span>
+              <span className="w-12 sm:w-16 text-right">Score</span>
+              <span className="w-12 sm:w-16 text-right hidden sm:block">Need</span>
             </div>
 
             <div className="space-y-1">
@@ -269,17 +269,17 @@ export function IOCalculator() {
 
                 return (
                   <div key={d.slug} className={cn(
-                    "flex items-center gap-2 px-2.5 py-1.5 rounded border text-sm",
+                    "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 rounded border text-sm",
                     atTarget ? "bg-green-500/5 border-green-500/20" : "bg-secondary/20 border-border"
                   )}>
-                    <span className="w-8 text-[10px] font-bold text-muted-foreground text-center">{d.shortName}</span>
+                    <span className="w-7 sm:w-8 text-[10px] font-bold text-muted-foreground text-center">{d.shortName}</span>
                     <span className="flex-1 text-xs truncate">{d.name}</span>
 
                     {/* Key level input */}
-                    <div className="flex items-center gap-0.5 w-[88px] justify-center">
+                    <div className="flex items-center gap-0.5 w-[80px] sm:w-[88px] justify-center">
                       <button onClick={() => setLevel(d.slug, data.level - 1)}
                         className="w-5 h-5 rounded bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center text-[10px]">−</button>
-                      <span className={cn("w-8 text-center text-xs font-mono font-bold",
+                      <span className={cn("w-7 sm:w-8 text-center text-xs font-mono font-bold",
                         data.level > 0 ? (atTarget ? "text-green-400" : "text-primary") : "text-muted-foreground/30"
                       )}>
                         {data.level > 0 ? `+${data.level}` : "—"}
@@ -289,15 +289,15 @@ export function IOCalculator() {
                     </div>
 
                     {/* Score */}
-                    <span className={cn("w-16 text-right text-xs font-mono",
+                    <span className={cn("w-12 sm:w-16 text-right text-xs font-mono",
                       atTarget ? "text-green-400" : score > 0 ? "text-foreground" : "text-muted-foreground/30"
                     )}>
                       {score > 0 ? Math.round(score) : "—"}
-                      {data.rioScore !== null && <span className="text-[8px] text-muted-foreground ml-0.5">rio</span>}
+                      {data.rioScore !== null && <span className="text-[8px] text-muted-foreground ml-0.5 hidden sm:inline">rio</span>}
                     </span>
 
-                    {/* Need */}
-                    <span className={cn("w-16 text-right text-xs",
+                    {/* Need — hidden on mobile */}
+                    <span className={cn("w-12 sm:w-16 text-right text-xs hidden sm:block",
                       atTarget ? "text-green-400" : "text-orange-400"
                     )}>
                       {atTarget ? "✓" : neededLevel > 0 ? `+${neededLevel}` : "—"}

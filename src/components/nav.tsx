@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Shield, Users, Calendar, BookOpen, Settings, Lock, ChevronDown, Map, ClipboardCheck, Wrench, Swords, KeyRound } from "lucide-react";
+import { Shield, Users, Calendar, BookOpen, Settings, Lock, ChevronDown, Map, ClipboardCheck, Wrench, Swords, KeyRound, Menu, X } from "lucide-react";
 import { useAdmin } from "@/components/admin-provider";
 
 interface NavLink {
@@ -39,7 +39,7 @@ const links: NavLink[] = [
   { href: "/admin", label: "Admin", icon: Settings },
 ];
 
-function NavDropdown({ link, isActive, pathname }: { link: NavLink; isActive: boolean; pathname: string }) {
+function NavDropdown({ link, isActive, pathname, onNavigate }: { link: NavLink; isActive: boolean; pathname: string; onNavigate?: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -59,6 +59,7 @@ function NavDropdown({ link, isActive, pathname }: { link: NavLink; isActive: bo
       <div className="flex items-center">
         <Link
           href={link.href}
+          onClick={() => { setOpen(false); onNavigate?.(); }}
           className={cn(
             "flex items-center gap-2 px-3 py-2 rounded-l-md text-sm font-medium transition-colors",
             isActive || childActive
@@ -67,7 +68,7 @@ function NavDropdown({ link, isActive, pathname }: { link: NavLink; isActive: bo
           )}
         >
           <Icon className="h-4 w-4" />
-          <span className="hidden sm:inline">{link.label}</span>
+          {link.label}
         </Link>
         <button
           onClick={() => setOpen(!open)}
@@ -90,7 +91,7 @@ function NavDropdown({ link, isActive, pathname }: { link: NavLink; isActive: bo
               <Link
                 key={child.href}
                 href={child.href}
-                onClick={() => setOpen(false)}
+                onClick={() => { setOpen(false); onNavigate?.(); }}
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors first:rounded-t-md last:rounded-b-md",
                   childIsActive
@@ -109,23 +110,75 @@ function NavDropdown({ link, isActive, pathname }: { link: NavLink; isActive: bo
   );
 }
 
+// Mobile nav — full list with children inline
+function MobileNavLink({ link, pathname, onNavigate }: { link: NavLink; pathname: string; onNavigate: () => void }) {
+  const Icon = link.icon;
+  const isActive = link.href === "/" ? pathname === "/" : pathname === link.href;
+  const childActive = link.children?.some((c) => pathname.startsWith(c.href)) ?? false;
+
+  return (
+    <div>
+      <Link
+        href={link.href}
+        onClick={onNavigate}
+        className={cn(
+          "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
+          isActive || childActive ? "text-primary bg-primary/5" : "text-foreground hover:bg-accent"
+        )}
+      >
+        <Icon className="h-5 w-5" />
+        {link.label}
+      </Link>
+      {link.children && (
+        <div className="pl-8 border-l-2 border-border ml-6">
+          {link.children.map((child) => {
+            const ChildIcon = child.icon;
+            const childIsActive = pathname.startsWith(child.href);
+            return (
+              <Link
+                key={child.href}
+                href={child.href}
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
+                  childIsActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <ChildIcon className="h-4 w-4" />
+                {child.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Nav() {
   const pathname = usePathname();
   const { isAuthenticated } = useAdmin();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile nav on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   return (
-    <header className="border-b border-border bg-card">
+    <header className="border-b border-border bg-card sticky top-0 z-50">
       <div className="container mx-auto max-w-7xl px-4">
         <div className="flex items-center justify-between h-14">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg text-primary">
             <Shield className="h-5 w-5" />
             DUTLOK
           </Link>
-          <nav className="flex items-center gap-1">
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1">
             {links.map((link) => {
               const Icon = link.icon;
-              const isActive =
-                link.href === "/" ? pathname === "/" : pathname === link.href;
+              const isActive = link.href === "/" ? pathname === "/" : pathname === link.href;
 
               if (link.children) {
                 return <NavDropdown key={link.href} link={link} isActive={isActive} pathname={pathname} />;
@@ -143,19 +196,50 @@ export function Nav() {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{link.label}</span>
+                  {link.label}
                 </Link>
               );
             })}
             {isAuthenticated && (
               <span className="ml-2 flex items-center gap-1 text-xs text-green-400">
                 <Lock className="h-3 w-3" />
-                <span className="hidden sm:inline">Admin</span>
+                Admin
               </span>
             )}
           </nav>
+
+          {/* Mobile hamburger */}
+          <div className="flex items-center gap-2 md:hidden">
+            {isAuthenticated && (
+              <span className="flex items-center gap-1 text-xs text-green-400">
+                <Lock className="h-3 w-3" />
+              </span>
+            )}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-border bg-card">
+          <nav className="py-2">
+            {links.map((link) => (
+              <MobileNavLink
+                key={link.href}
+                link={link}
+                pathname={pathname}
+                onNavigate={() => setMobileOpen(false)}
+              />
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

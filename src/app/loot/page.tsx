@@ -407,43 +407,67 @@ export default function LootPage() {
                   <span className="text-sm text-muted-foreground">{entries[0].raidName}</span>
                 )}
               </div>
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border/50">
-                    <th className="text-left py-2 px-4 text-xs font-medium text-muted-foreground">Character</th>
-                    <th className="text-left py-2 px-4 text-xs font-medium text-muted-foreground">Item</th>
-                    <th className="text-right py-2 px-4 text-xs font-medium text-muted-foreground">iLvl</th>
-                    <th className="text-left py-2 px-4 text-xs font-medium text-muted-foreground">Boss</th>
-                    <th className="text-left py-2 px-4 text-xs font-medium text-muted-foreground">Notes</th>
-                    {isAuthenticated && <th className="py-2 px-4 w-10"></th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.map((entry) => (
-                    <tr key={entry.id} className="border-b border-border/30 hover:bg-accent/30">
-                      <td className="py-2 px-4 text-sm font-medium">{entry.characterName}</td>
-                      <td className="py-2 px-4 text-sm">
-                        <WowheadItem itemId={entry.itemId} itemName={entry.itemName} quality={entry.itemQuality} />
-                      </td>
-                      <td className="py-2 px-4 text-sm text-right font-mono text-muted-foreground">
-                        {entry.itemLevel ?? "-"}
-                      </td>
-                      <td className="py-2 px-4 text-sm text-muted-foreground">{entry.bossName ?? "-"}</td>
-                      <td className="py-2 px-4 text-sm text-muted-foreground">{entry.notes ?? "-"}</td>
+              {/* Mobile card view */}
+              <div className="sm:hidden divide-y divide-border/30">
+                {entries.map((entry) => (
+                  <div key={entry.id} className="p-3 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{entry.characterName}</span>
                       {isAuthenticated && (
-                        <td className="py-2 px-4">
-                          <button
-                            onClick={() => handleDelete(entry.id)}
-                            className="text-muted-foreground hover:text-destructive transition-colors"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </td>
+                        <button onClick={() => handleDelete(entry.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       )}
+                    </div>
+                    <div className="text-sm">
+                      <WowheadItem itemId={entry.itemId} itemName={entry.itemName} quality={entry.itemQuality} />
+                    </div>
+                    <div className="flex gap-3 text-xs text-muted-foreground">
+                      {entry.itemLevel && <span>iLvl {entry.itemLevel}</span>}
+                      {entry.bossName && <span>{entry.bossName}</span>}
+                      {entry.notes && <span>{entry.notes}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table view */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left py-2 px-4 text-xs font-medium text-muted-foreground">Character</th>
+                      <th className="text-left py-2 px-4 text-xs font-medium text-muted-foreground">Item</th>
+                      <th className="text-right py-2 px-4 text-xs font-medium text-muted-foreground hidden md:table-cell">iLvl</th>
+                      <th className="text-left py-2 px-4 text-xs font-medium text-muted-foreground">Boss</th>
+                      <th className="text-left py-2 px-4 text-xs font-medium text-muted-foreground hidden lg:table-cell">Notes</th>
+                      {isAuthenticated && <th className="py-2 px-4 w-10"></th>}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {entries.map((entry) => (
+                      <tr key={entry.id} className="border-b border-border/30 hover:bg-accent/30">
+                        <td className="py-2 px-4 text-sm font-medium">{entry.characterName}</td>
+                        <td className="py-2 px-4 text-sm">
+                          <WowheadItem itemId={entry.itemId} itemName={entry.itemName} quality={entry.itemQuality} />
+                        </td>
+                        <td className="py-2 px-4 text-sm text-right font-mono text-muted-foreground hidden md:table-cell">
+                          {entry.itemLevel ?? "-"}
+                        </td>
+                        <td className="py-2 px-4 text-sm text-muted-foreground">{entry.bossName ?? "-"}</td>
+                        <td className="py-2 px-4 text-sm text-muted-foreground hidden lg:table-cell">{entry.notes ?? "-"}</td>
+                        {isAuthenticated && (
+                          <td className="py-2 px-4">
+                            <button onClick={() => handleDelete(entry.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ))
       )}
