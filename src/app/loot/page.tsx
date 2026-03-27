@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Trash2, Search, X, Swords, AlertCircle, CheckCircle } from "lucide-react";
 import { useAdmin } from "@/components/admin-provider";
+import { WowheadItem, useWowheadTooltips } from "@/components/wowhead-item";
 
 interface LootEntry {
   id: number;
   characterName: string;
   itemName: string;
+  itemId: number | null;
   itemQuality: string | null;
   itemLevel: number | null;
   bossName: string | null;
@@ -73,6 +75,8 @@ export default function LootPage() {
     }
     setLoading(false);
   }, [filterRaid, filterDate, filterCharacter]);
+
+  useWowheadTooltips([loot]);
 
   useEffect(() => {
     fetchLoot();
@@ -419,9 +423,7 @@ export default function LootPage() {
                     <tr key={entry.id} className="border-b border-border/30 hover:bg-accent/30">
                       <td className="py-2 px-4 text-sm font-medium">{entry.characterName}</td>
                       <td className="py-2 px-4 text-sm">
-                        <span className={QUALITY_CLASSES[(entry.itemQuality || "common").toLowerCase()] || ""}>
-                          {entry.itemName}
-                        </span>
+                        <WowheadItem itemId={entry.itemId} itemName={entry.itemName} quality={entry.itemQuality} />
                       </td>
                       <td className="py-2 px-4 text-sm text-right font-mono text-muted-foreground">
                         {entry.itemLevel ?? "-"}

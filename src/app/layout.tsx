@@ -14,6 +14,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `const whTooltips = { colorLinks: true, iconizeLinks: true, iconSize: "small" };`,
+          }}
+        />
+        <script src="https://wow.zamimg.com/js/tooltips.js" async />
+      </head>
       <body className={inter.className}>
         <AdminProvider>
           <div className="min-h-screen flex flex-col">

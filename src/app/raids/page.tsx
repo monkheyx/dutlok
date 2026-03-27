@@ -5,6 +5,7 @@ import { useAdmin } from "@/components/admin-provider";
 import { Calendar, Plus, Users, CheckCircle, Clock, XCircle, Armchair, Trash2, AlertCircle, Swords, ChevronDown, ChevronUp, Upload, FileJson, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { WowheadItem, useWowheadTooltips } from "@/components/wowhead-item";
 
 interface Character {
   id: number;
@@ -30,6 +31,7 @@ interface LootEntry {
   id: number;
   characterName: string;
   itemName: string;
+  itemId: number | null;
   itemQuality: string | null;
   itemLevel: number | null;
   bossName: string | null;
@@ -123,6 +125,9 @@ export default function RaidsPage() {
 
   // Group attendance by date+raid
   const raidSessions = groupBySession(attendance);
+
+  // Refresh Wowhead tooltips when loot data changes
+  useWowheadTooltips([loot, expandedSessions]);
 
   function toggleSession(key: string) {
     setExpandedSessions((prev) => {
@@ -507,8 +512,8 @@ export default function RaidsPage() {
                           {sessionLoot.map((entry) => (
                             <div key={entry.id} className="flex items-center gap-3 py-1 text-sm">
                               <span className="text-muted-foreground w-24 truncate flex-shrink-0">{entry.characterName}</span>
-                              <span className={cn("flex-1 truncate font-medium", QUALITY_CLASSES[(entry.itemQuality || "common").toLowerCase()] || "")}>
-                                {entry.itemName}
+                              <span className="flex-1 truncate">
+                                <WowheadItem itemId={entry.itemId} itemName={entry.itemName} quality={entry.itemQuality} />
                               </span>
                               {entry.itemLevel && (
                                 <span className="text-xs text-muted-foreground font-mono flex-shrink-0">
