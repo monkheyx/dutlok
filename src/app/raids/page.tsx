@@ -580,29 +580,40 @@ function RaidLogImport({
 }) {
   const [logPreview, setLogPreview] = useState<any>(null);
   const [error, setError] = useState("");
-  const fileInputRef = useState<HTMLInputElement | null>(null);
+  const [pasteMode, setPasteMode] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+
+  function parseLogJson(text: string) {
+    setError("");
+    setImportResult(null);
+    try {
+      const json = JSON.parse(text);
+      if (!json.encounters || !Array.isArray(json.encounters)) {
+        setError("Invalid log format — missing encounters array");
+        return;
+      }
+      setLogPreview(json);
+      setPasteMode(false);
+      setPasteText("");
+    } catch {
+      setError("Failed to parse JSON — check the format");
+    }
+  }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    setError("");
-    setImportResult(null);
-
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const json = JSON.parse(ev.target?.result as string);
-        if (!json.encounters || !Array.isArray(json.encounters)) {
-          setError("Invalid log format — missing encounters array");
-          return;
-        }
-        setLogPreview(json);
-      } catch {
-        setError("Failed to parse JSON file");
-      }
-    };
+    reader.onload = (ev) => parseLogJson(ev.target?.result as string);
     reader.readAsText(file);
+  }
+
+  function handlePaste() {
+    if (!pasteText.trim()) {
+      setError("Paste your JSON data first");
+      return;
+    }
+    parseLogJson(pasteText);
   }
 
   async function handleImport() {
@@ -646,18 +657,61 @@ function RaidLogImport({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Upload a JSON raid log exported from JehmUI. This will create attendance records for all players present on kill encounters and import all loot drops.
+        Upload or paste a JSON raid log exported from JehmUI. Creates attendance records for all players on kill encounters and imports loot drops.
       </p>
 
-      {/* File input */}
-      <div>
-        <input
-          type="file"
-          accept=".json,application/json"
-          onChange={handleFileSelect}
-          className="text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:text-sm file:font-medium file:bg-secondary file:text-foreground hover:file:bg-accent file:cursor-pointer file:transition-colors"
-        />
+      {/* Input mode toggle */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => { setPasteMode(false); setError(""); }}
+          className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-all",
+            !pasteMode ? "bg-primary/15 border-primary/40 text-primary" : "bg-secondary border-border text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Upload className="h-3 w-3" />
+          Upload File
+        </button>
+        <button
+          onClick={() => { setPasteMode(true); setError(""); }}
+          className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-all",
+            pasteMode ? "bg-primary/15 border-primary/40 text-primary" : "bg-secondary border-border text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <FileJson className="h-3 w-3" />
+          Paste JSON
+        </button>
       </div>
+
+      {/* File upload */}
+      {!pasteMode && (
+        <div>
+          <input
+            type="file"
+            accept=".json,application/json"
+            onChange={handleFileSelect}
+            className="text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:text-sm file:font-medium file:bg-secondary file:text-foreground hover:file:bg-accent file:cursor-pointer file:transition-colors"
+          />
+        </div>
+      )}
+
+      {/* Paste JSON */}
+      {pasteMode && (
+        <div className="space-y-2">
+          <textarea
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            placeholder='Paste your JSON log here (starts with { "addon": "JehmUI", ... })'
+            className="w-full h-40 bg-secondary border border-border rounded-md p-3 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+          />
+          <button
+            onClick={handlePaste}
+            className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:opacity-90 transition-opacity"
+          >
+            <FileJson className="h-3 w-3" />
+            Parse JSON
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="flex items-center gap-2 p-3 rounded-lg border text-sm bg-red-500/10 border-red-500/30 text-red-400">
