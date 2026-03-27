@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAdmin } from "@/components/admin-provider";
-import { Calendar, Plus, Users, CheckCircle, Clock, XCircle, Armchair, Trash2, AlertCircle, Swords, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Plus, Users, CheckCircle, Clock, XCircle, Armchair, Trash2, AlertCircle, Swords, ChevronDown, ChevronUp, Upload, FileJson, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -80,6 +80,9 @@ export default function RaidsPage() {
 
   // New raid form
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
   const [raidName, setRaidName] = useState("");
   const [raidDate, setRaidDate] = useState(new Date().toISOString().split("T")[0]);
   const [difficulty, setDifficulty] = useState("Heroic");
@@ -225,15 +228,36 @@ export default function RaidsPage() {
           <p className="text-muted-foreground text-sm mt-1">Track who showed up to each raid night.</p>
         </div>
         {isAuthenticated && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 bg-primary text-primary-foreground rounded-md py-2 px-4 text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            <Plus className="h-4 w-4" />
-            Log Raid
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setShowImport(!showImport); setShowForm(false); }}
+              className="flex items-center gap-2 bg-secondary border border-border text-foreground rounded-md py-2 px-4 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              <Upload className="h-4 w-4" />
+              Import Log
+            </button>
+            <button
+              onClick={() => { setShowForm(!showForm); setShowImport(false); }}
+              className="flex items-center gap-2 bg-primary text-primary-foreground rounded-md py-2 px-4 text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              <Plus className="h-4 w-4" />
+              Log Raid
+            </button>
+          </div>
         )}
       </div>
+
+      {/* Import Log Section */}
+      {showImport && isAuthenticated && (
+        <RaidLogImport
+          password={password}
+          importing={importing}
+          setImporting={setImporting}
+          importResult={importResult}
+          setImportResult={setImportResult}
+          onComplete={() => { fetchData(); }}
+        />
+      )}
 
       {message && (
         <div className={cn(
@@ -529,6 +553,235 @@ function groupBySession(records: AttendanceRecord[]): RaidSession[] {
     }
     map.get(key)!.records.push(rec);
   }
-  // Sort by date desc
   return Array.from(map.values()).sort((a, b) => b.raidDate.localeCompare(a.raidDate));
+}
+
+// ── Raid Log Import Component ──
+
+function RaidLogImport({
+  password,
+  importing,
+  setImporting,
+  importResult,
+  setImportResult,
+  onComplete,
+}: {
+  password: string;
+  importing: boolean;
+  setImporting: (v: boolean) => void;
+  importResult: any;
+  setImportResult: (v: any) => void;
+  onComplete: () => void;
+}) {
+  const [logPreview, setLogPreview] = useState<any>(null);
+  const [error, setError] = useState("");
+  const fileInputRef = useState<HTMLInputElement | null>(null);
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError("");
+    setImportResult(null);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const json = JSON.parse(ev.target?.result as string);
+        if (!json.encounters || !Array.isArray(json.encounters)) {
+          setError("Invalid log format — missing encounters array");
+          return;
+        }
+        setLogPreview(json);
+      } catch {
+        setError("Failed to parse JSON file");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  async function handleImport() {
+    if (!logPreview) return;
+    setImporting(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/raid-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, log: logPreview }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImportResult(data);
+        setLogPreview(null);
+        onComplete();
+      } else {
+        setError(data.error || "Import failed");
+      }
+    } catch {
+      setError("Network error during import");
+    }
+    setImporting(false);
+  }
+
+  const kills = logPreview?.encounters?.filter((e: any) => e.success) || [];
+  const wipes = logPreview?.encounters?.filter((e: any) => !e.success) || [];
+  const totalLoot = kills.reduce((sum: number, e: any) => sum + (e.loot?.length || 0), 0);
+  const uniquePlayers = new Set<string>();
+  for (const enc of kills) {
+    for (const m of enc.roster || []) uniquePlayers.add(m.name);
+  }
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-4 space-y-4">
+      <div className="flex items-center gap-2">
+        <FileJson className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold">Import Raid Log</h2>
+      </div>
+
+      <p className="text-sm text-muted-foreground">
+        Upload a JSON raid log exported from JehmUI. This will create attendance records for all players present on kill encounters and import all loot drops.
+      </p>
+
+      {/* File input */}
+      <div>
+        <input
+          type="file"
+          accept=".json,application/json"
+          onChange={handleFileSelect}
+          className="text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:text-sm file:font-medium file:bg-secondary file:text-foreground hover:file:bg-accent file:cursor-pointer file:transition-colors"
+        />
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-lg border text-sm bg-red-500/10 border-red-500/30 text-red-400">
+          <AlertCircle className="h-4 w-4" />
+          {error}
+        </div>
+      )}
+
+      {/* Preview */}
+      {logPreview && !importResult && (
+        <div className="bg-secondary/30 border border-border rounded-lg p-3 space-y-3">
+          <h3 className="text-sm font-semibold">Log Preview</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div>
+              <span className="text-xs text-muted-foreground block">Raid</span>
+              <span className="font-medium">{logPreview.instance}</span>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground block">Difficulty</span>
+              <span className={cn("font-medium",
+                logPreview.difficulty === "Mythic" ? "text-orange-400" :
+                logPreview.difficulty === "Heroic" ? "text-purple-400" : "text-green-400"
+              )}>{logPreview.difficulty}</span>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground block">Date</span>
+              <span className="font-medium">{logPreview.startTime?.split("T")[0]}</span>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground block">Addon</span>
+              <span className="font-medium">{logPreview.addon} v{logPreview.version}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div>
+              <span className="text-xs text-muted-foreground block">Encounters</span>
+              <span className="font-medium">{logPreview.encounters.length} total</span>
+            </div>
+            <div>
+              <span className="text-xs text-green-400 block">Kills</span>
+              <span className="font-medium text-green-400">{kills.length}</span>
+            </div>
+            <div>
+              <span className="text-xs text-red-400 block">Wipes</span>
+              <span className="font-medium text-red-400">{wipes.length}</span>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground block">Players</span>
+              <span className="font-medium">{uniquePlayers.size}</span>
+            </div>
+          </div>
+
+          {/* Encounter list */}
+          <div className="space-y-1">
+            <span className="text-xs text-muted-foreground">Encounters:</span>
+            {logPreview.encounters.map((enc: any, i: number) => (
+              <div key={i} className="flex items-center gap-2 text-xs">
+                <span className={cn("w-2 h-2 rounded-full", enc.success ? "bg-green-400" : "bg-red-400")} />
+                <span className="font-medium">{enc.encounterName}</span>
+                {enc.loot?.length > 0 && (
+                  <span className="text-primary">{enc.loot.length} loot</span>
+                )}
+                <span className="text-muted-foreground">
+                  {Math.floor(enc.duration / 60)}:{(enc.duration % 60).toString().padStart(2, "0")}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Loot preview */}
+          {totalLoot > 0 && (
+            <div className="space-y-1">
+              <span className="text-xs text-muted-foreground">Loot ({totalLoot} items):</span>
+              {kills.flatMap((enc: any) =>
+                (enc.loot || []).map((item: any, j: number) => (
+                  <div key={`${enc.encounterID}-${j}`} className="flex items-center gap-2 text-xs">
+                    <span className="text-muted-foreground w-20 truncate">{item.player.split("-")[0]}</span>
+                    <span className="quality-epic font-medium truncate">{item.itemName}</span>
+                    <span className="text-muted-foreground">({enc.encounterName})</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={handleImport}
+            disabled={importing}
+            className="flex items-center gap-2 bg-primary text-primary-foreground rounded-md py-2 px-4 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {importing ? "Importing..." : `Import ${kills.length} kills + ${totalLoot} loot items`}
+          </button>
+        </div>
+      )}
+
+      {/* Import result */}
+      {importResult && (
+        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 space-y-2">
+          <div className="flex items-center gap-2 text-green-400">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-sm font-semibold">Import Complete</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+            <div>
+              <span className="text-xs text-muted-foreground block">Raid</span>
+              <span className="text-green-400">{importResult.raidName}</span>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground block">Encounters</span>
+              <span className="text-green-400">{importResult.encountersProcessed} kills, {importResult.encountersSkipped} wipes</span>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground block">Attendance</span>
+              <span className="text-green-400">{importResult.attendanceAdded} players</span>
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground block">Loot</span>
+              <span className="text-green-400">{importResult.lootAdded} items</span>
+            </div>
+          </div>
+          {importResult.errors?.length > 0 && (
+            <div className="text-xs text-orange-400">
+              {importResult.errors.length} warnings: {importResult.errors[0]}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
