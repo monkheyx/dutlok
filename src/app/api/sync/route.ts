@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { importGuildRoster, syncAllCharacters, syncCharacter } from "@/services/sync";
 import { checkAdminPassword } from "@/lib/auth";
 

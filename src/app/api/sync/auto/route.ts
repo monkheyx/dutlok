@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { syncAllCharacters } from "@/services/sync";
 
 // Internal secret to prevent unauthorized triggers

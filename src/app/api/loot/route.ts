@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { db, schema } from "@/db";
 import { desc, eq, and, like } from "drizzle-orm";
 import { checkAdminPassword } from "@/lib/auth";

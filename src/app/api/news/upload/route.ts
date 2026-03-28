@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { checkAdminPassword } from "@/lib/auth";
 
 // POST /api/news/upload — upload an image, returns a base64 data URI
