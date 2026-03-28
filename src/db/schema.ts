@@ -220,6 +220,23 @@ export const newsPosts = sqliteTable("news_posts", {
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });
 
+// CMS Pages
+export const cmsPages = sqliteTable("cms_pages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  content: text("content").notNull(),
+  metaDescription: text("meta_description"),
+  headerImageUrl: text("header_image_url"),
+  showInNav: integer("show_in_nav", { mode: "boolean" }).default(false),
+  navLabel: text("nav_label"),
+  navOrder: integer("nav_order").default(100),
+  isPublished: integer("is_published", { mode: "boolean" }).default(true),
+  createdBy: text("created_by"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").default(sql`(datetime('now'))`),
+});
+
 // Admin audit log
 export const auditLog = sqliteTable("audit_log", {
   id: integer("id").primaryKey({ autoIncrement: true }),

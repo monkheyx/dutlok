@@ -219,6 +219,22 @@ export function initializeDatabase() {
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS cms_pages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      content TEXT NOT NULL,
+      meta_description TEXT,
+      header_image_url TEXT,
+      show_in_nav INTEGER DEFAULT 0,
+      nav_label TEXT,
+      nav_order INTEGER DEFAULT 100,
+      is_published INTEGER DEFAULT 1,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   // ── Add columns that may be missing on older DBs ──

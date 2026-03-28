@@ -5,6 +5,7 @@ import { RefreshCw, Download, UserPlus, AlertCircle, CheckCircle, KeyRound, LogO
 import { useAdmin } from "@/components/admin-provider";
 import { PendingRegistrations } from "@/components/pending-registrations";
 import { NewsEditor } from "@/components/news-editor";
+import { PageManager } from "@/components/page-manager";
 import { cn } from "@/lib/utils";
 
 export default function AdminPage() {
@@ -243,6 +244,11 @@ export default function AdminPage() {
       {/* News Management */}
       <div className="bg-card border border-border rounded-lg p-4">
         <NewsEditor />
+      </div>
+
+      {/* Custom Pages */}
+      <div className="bg-card border border-border rounded-lg p-4">
+        <PageManager />
       </div>
 
       {/* Pending Registrations */}

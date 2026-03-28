@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Shield, Users, Calendar, BookOpen, Settings, Lock, ChevronDown, Map, ClipboardCheck, Wrench, Swords, KeyRound, Menu, X } from "lucide-react";
+import { Shield, Users, Calendar, BookOpen, Settings, Lock, ChevronDown, Map, ClipboardCheck, Wrench, Swords, KeyRound, Menu, X, FileText } from "lucide-react";
 import { useAdmin } from "@/components/admin-provider";
 
 interface NavLink {
@@ -159,6 +159,29 @@ export function Nav() {
   const pathname = usePathname();
   const { isAuthenticated } = useAdmin();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [customPages, setCustomPages] = useState<NavLink[]>([]);
+
+  // Fetch custom CMS pages that should appear in nav
+  useEffect(() => {
+    fetch("/api/pages?nav=true")
+      .then((r) => r.json())
+      .then((pages: any[]) => {
+        setCustomPages(
+          pages
+            .filter((p) => p.showInNav && p.isPublished)
+            .sort((a, b) => (a.navOrder ?? 100) - (b.navOrder ?? 100))
+            .map((p) => ({
+              href: `/p/${p.slug}`,
+              label: p.navLabel || p.title,
+              icon: FileText,
+            }))
+        );
+      })
+      .catch(() => {});
+  }, []);
+
+  // Merge hardcoded links + custom pages (insert before Admin)
+  const allLinks = [...links.slice(0, -1), ...customPages, links[links.length - 1]];
 
   // Close mobile nav on route change
   useEffect(() => {
@@ -176,7 +199,7 @@ export function Nav() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {links.map((link) => {
+            {allLinks.map((link) => {
               const Icon = link.icon;
               const isActive = link.href === "/" ? pathname === "/" : pathname === link.href;
 
@@ -229,7 +252,7 @@ export function Nav() {
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-card">
           <nav className="py-2">
-            {links.map((link) => (
+            {allLinks.map((link) => (
               <MobileNavLink
                 key={link.href}
                 link={link}
