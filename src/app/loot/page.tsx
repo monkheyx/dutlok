@@ -53,6 +53,7 @@ export default function LootPage() {
   const [form, setForm] = useState({
     characterName: "",
     itemName: "",
+    itemId: "",
     itemQuality: "Epic",
     itemLevel: "",
     bossName: "",
@@ -95,6 +96,7 @@ export default function LootPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          itemId: form.itemId ? parseInt(form.itemId) : null,
           itemLevel: form.itemLevel ? parseInt(form.itemLevel) : null,
           password,
         }),
@@ -102,7 +104,7 @@ export default function LootPage() {
       const data = await res.json();
       if (res.ok) {
         setMessage({ type: "success", text: `Added ${form.itemName} for ${form.characterName}` });
-        setForm((prev) => ({ ...prev, characterName: "", itemName: "", itemLevel: "", bossName: "", notes: "" }));
+        setForm((prev) => ({ ...prev, characterName: "", itemName: "", itemId: "", itemLevel: "", bossName: "", notes: "" }));
         fetchLoot();
       } else {
         setMessage({ type: "error", text: data.error || "Failed to add" });
@@ -244,6 +246,16 @@ export default function LootPage() {
                 onChange={(e) => setForm({ ...form, itemName: e.target.value })}
                 className="w-full mt-1 bg-secondary border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 required
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Item ID <span className="text-muted-foreground/50">(Wowhead tooltip)</span></label>
+              <input
+                type="number"
+                value={form.itemId}
+                onChange={(e) => setForm({ ...form, itemId: e.target.value })}
+                className="w-full mt-1 bg-secondary border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="e.g. 212399"
               />
             </div>
             <div>
