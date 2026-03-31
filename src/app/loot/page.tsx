@@ -20,16 +20,7 @@ interface LootEntry {
   createdAt: string;
 }
 
-const QUALITY_CLASSES: Record<string, string> = {
-  poor: "quality-poor",
-  common: "quality-common",
-  uncommon: "quality-uncommon",
-  rare: "quality-rare",
-  epic: "quality-epic",
-  legendary: "quality-legendary",
-  artifact: "quality-artifact",
-  heirloom: "quality-heirloom",
-};
+
 
 const QUALITIES = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
 

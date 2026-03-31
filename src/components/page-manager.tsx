@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, Pencil, Trash2, ExternalLink, Globe, Eye, EyeOff, FileText, Loader2, CheckCircle, AlertCircle, X, Copy } from "lucide-react";
 import { useAdmin } from "@/components/admin-provider";
-import { cn } from "@/lib/utils";
+import { cn, slugify } from "@/lib/utils";
 import { RichTextEditor, getEditorContent } from "@/components/rich-text-editor";
 
 interface CmsPage {
@@ -180,7 +180,7 @@ function PageEditor({
   function handleTitleChange(value: string) {
     setTitle(value);
     if (!slugManual) {
-      setSlug(value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+      setSlug(slugify(value));
     }
   }
 

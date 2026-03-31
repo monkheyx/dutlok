@@ -39,3 +39,14 @@ export function slugify(text: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
+
+// CMS page slug validation
+export const RESERVED_SLUGS = [
+  "strategies", "mythic-plus", "roster", "character", "audit",
+  "raids", "loot", "professions", "neighborhood", "admin",
+  "api", "pages", "p", "join", "analytics",
+];
+
+export function isValidSlug(slug: string): boolean {
+  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && slug.length >= 2 && slug.length <= 100;
+}

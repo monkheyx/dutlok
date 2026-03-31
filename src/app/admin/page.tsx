@@ -24,6 +24,15 @@ const TABS = [
 
 type TabKey = typeof TABS[number]["key"];
 
+interface RosterChar {
+  id: number;
+  name: string;
+  className: string | null;
+  isActive: boolean;
+  isRaider: boolean;
+  isRaiderAlt: boolean;
+}
+
 export default function AdminPage() {
   const { password, isAuthenticated, login, logout } = useAdmin();
   const [loginInput, setLoginInput] = useState("");
@@ -33,7 +42,6 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
 
   // Roster
-  interface RosterChar { id: number; name: string; className: string | null; isActive: boolean; isRaider: boolean; isRaiderAlt: boolean; }
   const [rosterChars, setRosterChars] = useState<RosterChar[]>([]);
   const [rosterLoaded, setRosterLoaded] = useState(false);
   const [raiderSearch, setRaiderSearch] = useState("");
@@ -457,7 +465,7 @@ function StatBox({ label, value, color, onClick }: { label: string; value: numbe
   );
 }
 
-function QuickAction({ label, icon: Icon, onClick, loading, badge }: { label: string; icon: any; onClick: () => void; loading?: boolean; badge?: string }) {
+function QuickAction({ label, icon: Icon, onClick, loading, badge }: { label: string; icon: React.ComponentType<{ className?: string }>; onClick: () => void; loading?: boolean; badge?: string }) {
   return (
     <button onClick={onClick} disabled={loading}
       className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-left hover:bg-accent transition-colors disabled:opacity-50">

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-export const dynamic = "force-dynamic";
 import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 import { checkAdminPassword } from "@/lib/auth";
+import { RESERVED_SLUGS, isValidSlug } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 // GET — single page by ID
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -37,12 +39,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     // Slug change requires validation
     if (fields.slug !== undefined && fields.slug !== existing.slug) {
-      const RESERVED = ["strategies", "mythic-plus", "roster", "character", "audit", "raids", "loot", "professions", "neighborhood", "admin", "api", "pages", "p", "join", "analytics"];
       const normalized = fields.slug.toLowerCase().trim();
-      if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(normalized) || normalized.length < 2) {
+      if (!isValidSlug(normalized)) {
         return NextResponse.json({ error: "Invalid slug format" }, { status: 400 });
       }
-      if (RESERVED.includes(normalized)) {
+      if (RESERVED_SLUGS.includes(normalized)) {
         return NextResponse.json({ error: `Slug "${normalized}" is reserved` }, { status: 400 });
       }
       const dup = db.select().from(schema.cmsPages).where(eq(schema.cmsPages.slug, normalized)).get();

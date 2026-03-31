@@ -168,8 +168,7 @@ export function Nav() {
       .then((pages: any[]) => {
         setCustomPages(
           pages
-            .filter((p) => p.showInNav && p.isPublished)
-            .sort((a, b) => (a.navOrder ?? 100) - (b.navOrder ?? 100))
+            .sort((a: any, b: any) => (a.navOrder ?? 100) - (b.navOrder ?? 100))
             .map((p) => ({
               href: `/p/${p.slug}`,
               label: p.navLabel || p.title,

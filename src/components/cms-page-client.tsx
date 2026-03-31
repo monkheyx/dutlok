@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Pencil, ArrowLeft } from "lucide-react";
 import { useAdmin } from "@/components/admin-provider";
+import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
 
 interface PageData {
@@ -16,16 +16,6 @@ interface PageData {
 
 export function CmsPageClient({ page }: { page: PageData }) {
   const { isAuthenticated } = useAdmin();
-
-  function timeAgo(dateStr: string | null) {
-    if (!dateStr) return "";
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const days = Math.floor(diff / 86400000);
-    if (days < 1) return "today";
-    if (days === 1) return "yesterday";
-    if (days < 30) return `${days} days ago`;
-    return new Date(dateStr).toLocaleDateString();
-  }
 
   return (
     <div className="max-w-4xl mx-auto py-6 space-y-6">

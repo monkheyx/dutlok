@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { checkAdminPassword } from "@/lib/auth";
+import { RESERVED_SLUGS, isValidSlug } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-const RESERVED_SLUGS = [
-  "strategies", "mythic-plus", "roster", "character", "audit",
-  "raids", "loot", "professions", "neighborhood", "admin",
-  "api", "pages", "p", "join", "analytics",
-];
-
-function isValidSlug(slug: string): boolean {
-  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && slug.length >= 2 && slug.length <= 100;
-}
 
 // GET — list all pages (supports ?nav=true to filter nav-visible published pages)
 export async function GET(req: NextRequest) {
@@ -24,9 +15,8 @@ export async function GET(req: NextRequest) {
     pages = db
       .select()
       .from(schema.cmsPages)
-      .where(eq(schema.cmsPages.isPublished, true))
-      .all()
-      .filter((p) => p.showInNav);
+      .where(and(eq(schema.cmsPages.isPublished, true), eq(schema.cmsPages.showInNav, true)))
+      .all();
   } else {
     pages = db.select().from(schema.cmsPages).all();
   }

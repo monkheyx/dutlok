@@ -59,12 +59,7 @@ export function RichTextEditor({ initialContent, placeholder, minHeight = "200px
     e.target.value = "";
   }
 
-  // Expose getContent via a data attribute so parent can access it
-  useEffect(() => {
-    if (editorRef.current) {
-      (editorRef.current as any).__getContent = getContent;
-    }
-  });
+  // No effect needed — parent calls getEditorContent() directly via DOM query
 
   return (
     <div className="border border-border rounded-lg overflow-hidden bg-secondary/10">
