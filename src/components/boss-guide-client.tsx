@@ -321,6 +321,25 @@ export function BossGuideClient({ boss, tierName }: Props) {
             </ul>
           </div>
 
+          {/* Video Guide */}
+          {boss.guideVideo && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary mb-3 flex items-center gap-2">
+                <Play className="h-3.5 w-3.5" />
+                Video Guide — Hazelnuttygames
+              </h3>
+              <div className="relative w-full rounded-lg overflow-hidden border border-border bg-black" style={{ paddingBottom: "56.25%" }}>
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={boss.guideVideo.replace("watch?v=", "embed/")}
+                  title={`${boss.name} Video Guide`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          )}
+
           {/* Phase sections */}
           {boss.phases.map((phase, phaseIdx) => {
             const visibleAbilities = phase.abilities.filter(isAbilityVisible);

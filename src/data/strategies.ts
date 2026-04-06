@@ -34,6 +34,7 @@ export interface Boss {
   name: string;
   bossNumber: number;
   thumbnail: string; // URL or path
+  guideVideo?: string; // YouTube URL for embedded video guide (e.g. Hazelnuttygames)
   fightOverview: string[];
   quickStrat: string[]; // 3-5 bullet TLDR
   phases: Phase[];
@@ -65,6 +66,7 @@ const THE_VOIDSPIRE: RaidTier = {
       name: "Imperator Averzian",
       bossNumber: 1,
       thumbnail: "",
+      guideVideo: "https://www.youtube.com/watch?v=CNDPCFfYik8",
       difficulties: ["normal", "heroic", "mythic"],
       fightOverview: [
         "**Imperator Averzian** opens The Voidspire with a unique **tic-tac-toe board** mechanic.",
@@ -166,6 +168,7 @@ const THE_VOIDSPIRE: RaidTier = {
       name: "Vorasius",
       bossNumber: 2,
       thumbnail: "",
+      guideVideo: "https://www.youtube.com/watch?v=0ktmferSPmM",
       difficulties: ["normal", "heroic", "mythic"],
       fightOverview: [
         "**Vorasius** is a colossal predator born in the wastes of the Voidstorm, grown to enormous size.",
@@ -236,6 +239,7 @@ const THE_VOIDSPIRE: RaidTier = {
       name: "Fallen-King Salhadaar",
       bossNumber: 3,
       thumbnail: "",
+      guideVideo: "https://www.youtube.com/watch?v=RazQl-4xt_Y",
       difficulties: ["normal", "heroic", "mythic"],
       fightOverview: [
         "**Fallen-King Salhadaar** is a single-phase encounter with a repeating damage amplification intermission.",
@@ -339,6 +343,7 @@ const THE_VOIDSPIRE: RaidTier = {
       name: "Vaelgor & Ezzorak",
       bossNumber: 4,
       thumbnail: "",
+      guideVideo: "https://www.youtube.com/watch?v=DPwPA5vIQmQ",
       difficulties: ["normal", "heroic", "mythic"],
       fightOverview: [
         "**Vaelgor & Ezzorak** are twin red dragons corrupted by Xal'atath.",
@@ -421,6 +426,7 @@ const THE_VOIDSPIRE: RaidTier = {
       name: "Lightblinded Vanguard",
       bossNumber: 5,
       thumbnail: "",
+      guideVideo: "https://www.youtube.com/watch?v=yaUBiT5gXIs",
       difficulties: ["normal", "heroic", "mythic"],
       fightOverview: [
         "**Lightblinded Vanguard** is a three-paladin encounter featuring **Lightblood**, **Bellamy**, and **Senn** — former paragons of the Light who have surrendered to blinding zealotry.",
@@ -513,6 +519,7 @@ const THE_VOIDSPIRE: RaidTier = {
       name: "Crown of the Cosmos",
       bossNumber: 6,
       thumbnail: "",
+      guideVideo: "https://www.youtube.com/watch?v=v_nsue9gFQA",
       difficulties: ["normal", "heroic", "mythic"],
       fightOverview: [
         "**Crown of the Cosmos** is the final boss of The Voidspire — **Alleria Windrunner** wielding the full power of the Void.",
@@ -712,6 +719,7 @@ const THE_DREAMRIFT: RaidTier = {
       name: "Chimaerus the Undreamt God",
       bossNumber: 1,
       thumbnail: "",
+      guideVideo: "https://www.youtube.com/watch?v=cw9UUG1EPJY",
       difficulties: ["normal", "heroic", "mythic"],
       fightOverview: [
         "**Chimaerus the Undreamt God** is the sole boss of The Dreamrift — a complex encounter revolving around **Manifestation** management.",
@@ -854,6 +862,7 @@ const MARCH_ON_QUELDANAS: RaidTier = {
       name: "Belo'ren, Child of Al'ar",
       bossNumber: 1,
       thumbnail: "",
+      guideVideo: "https://www.youtube.com/watch?v=DHbvVQZtQeQ",
       difficulties: ["normal", "heroic", "mythic"],
       fightOverview: [
         "**Belo'ren, Child of Al'ar** is a phoenix guardian of Quel'Danas, corrupted by the Void.",
@@ -1184,265 +1193,12 @@ const MARCH_ON_QUELDANAS: RaidTier = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PREVIOUS TIER: Liberation of Undermine
-// ═══════════════════════════════════════════════════════════════════════════
-const LIBERATION_OF_UNDERMINE: RaidTier = {
-  slug: "liberation-of-undermine",
-  name: "Liberation of Undermine",
-  shortName: "Undermine",
-  isCurrent: false,
-  patch: "11.1",
-  bosses: [
-    {
-      slug: "vexie-and-solarion",
-      name: "Vexie and Solarion",
-      bossNumber: 1,
-      thumbnail: "",
-      difficulties: ["normal", "heroic", "mythic"],
-      fightOverview: [
-        "Dual boss encounter — both must die within 15 seconds of each other.",
-        "Manage **Static Charge** from Vexie and **Solar Flare** from Solarion.",
-      ],
-      quickStrat: [
-        "Keep bosses balanced in HP — within 5% of each other",
-        "Spread for Static Charge, stack for Solar Flare",
-        "Kill both within 15 seconds or the survivor enrages",
-      ],
-      phases: [
-        {
-          name: "Full Fight",
-          summary: "Dual target — balance HP and kill together",
-          abilities: [
-            {
-              name: "Static Charge",
-              icon: "⚡",
-              type: "Spread",
-              roles: ["everyone"],
-              description: "Vexie applies **Static Charge** to random players. Spread at least 5 yards.",
-              whatToDo: "SPREAD 5 YARDS WHEN DEBUFFED",
-              difficulties: ["normal", "heroic", "mythic"],
-            },
-            {
-              name: "Solar Flare",
-              icon: "☀️",
-              type: "Stack",
-              roles: ["everyone"],
-              description: "Solarion launches a **Solar Flare** — split damage that must be soaked by the whole raid.",
-              whatToDo: "STACK ON THE MARKED LOCATION TO SPLIT DAMAGE",
-              difficulties: ["normal", "heroic", "mythic"],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      slug: "cauldron-of-carnage",
-      name: "Cauldron of Carnage",
-      bossNumber: 2,
-      thumbnail: "",
-      difficulties: ["normal", "heroic", "mythic"],
-      fightOverview: [
-        "Arena-style fight with waves of adds and environmental hazards.",
-        "Survive the gauntlet to unlock the boss phase.",
-      ],
-      quickStrat: [
-        "Kill adds in priority order: Casters → Melee → Boss",
-        "Avoid cauldron pools — they deal ticking damage",
-        "Bloodlust when boss becomes active",
-      ],
-      phases: [
-        {
-          name: "Full Fight",
-          summary: "Survive add waves, then burn the boss",
-          abilities: [
-            {
-              name: "Cauldron Overflow",
-              icon: "🧪",
-              type: "Dodge",
-              roles: ["everyone"],
-              description: "Toxic pools spread across the floor. Standing in them deals **heavy Nature damage** per second.",
-              whatToDo: "STAY OUT OF GREEN POOLS",
-              difficulties: ["normal", "heroic", "mythic"],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      slug: "rik-reverb",
-      name: "Rik Reverb",
-      bossNumber: 3,
-      thumbnail: "",
-      difficulties: ["normal", "heroic", "mythic"],
-      fightOverview: [
-        "Sound-themed encounter with **Sonic Wave** dodging patterns.",
-        "Players must manage a **Resonance** debuff that amplifies damage taken.",
-      ],
-      quickStrat: [
-        "Dodge Sonic Waves — they sweep in patterns across the room",
-        "Dispel Resonance at 3 stacks",
-        "Tanks swap on Bass Drop",
-      ],
-      phases: [
-        {
-          name: "Full Fight",
-          summary: "Dodge waves, manage Resonance debuff stacks",
-          abilities: [
-            {
-              name: "Sonic Wave",
-              icon: "🔊",
-              type: "Dodge",
-              roles: ["everyone"],
-              description: "Waves of sound energy sweep across the room in patterns. Getting hit applies **Resonance** and deals damage.",
-              whatToDo: "LEARN THE WAVE PATTERNS — DODGE OR GET STACKS",
-              difficulties: ["normal", "heroic", "mythic"],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      slug: "stix-bunkjunker",
-      name: "Stix Bunkjunker",
-      bossNumber: 4,
-      thumbnail: "",
-      difficulties: ["normal", "heroic", "mythic"],
-      fightOverview: [
-        "Vehicle/turret encounter — players interact with environmental machinery.",
-        "Coordinate turret usage with boss vulnerability windows.",
-      ],
-      quickStrat: [
-        "Assign 2 players to turrets during vulnerability phase",
-        "Everyone else handles adds",
-        "Avoid Junk Toss — marked circles on the ground",
-      ],
-      phases: [
-        {
-          name: "Full Fight",
-          summary: "Use turrets during vulnerability — handle adds between",
-          abilities: [
-            {
-              name: "Junk Toss",
-              icon: "🗑️",
-              type: "Dodge",
-              roles: ["everyone"],
-              description: "Marked circles appear on the ground — heavy damage on impact.",
-              whatToDo: "MOVE OUT OF MARKED CIRCLES",
-              difficulties: ["normal", "heroic", "mythic"],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      slug: "the-onearmed-bandit",
-      name: "The One-Armed Bandit",
-      bossNumber: 5,
-      thumbnail: "",
-      difficulties: ["normal", "heroic", "mythic"],
-      fightOverview: [
-        "Slot-machine themed boss with randomized mechanic combinations.",
-        "Each 'spin' triggers 2-3 simultaneous mechanics from a pool.",
-      ],
-      quickStrat: [
-        "React to each spin — mechanics are semi-random",
-        "Priority: handle Jackpot (soak) > Bust (spread) > Wild (dodge)",
-        "Tanks swap on Loaded Dice",
-      ],
-      phases: [
-        {
-          name: "Full Fight",
-          summary: "React to random mechanic combos from each spin",
-          abilities: [
-            {
-              name: "Jackpot",
-              icon: "🎰",
-              type: "Soak",
-              roles: ["everyone"],
-              description: "Large soak circle — split damage among all players inside.",
-              whatToDo: "STACK IN SOAK CIRCLE",
-              difficulties: ["normal", "heroic", "mythic"],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      slug: "gallywix",
-      name: "Gallywix",
-      bossNumber: 6,
-      thumbnail: "",
-      difficulties: ["normal", "heroic", "mythic"],
-      fightOverview: [
-        "**Gallywix** is the final boss — multi-phase encounter with gold mechanics.",
-        "Manage **Bribery** debuffs and coordinate **Investment** soaks.",
-        "Phase 3 is a burn with escalating raid damage.",
-      ],
-      quickStrat: [
-        "P1: Handle Bribery — dispel at edges",
-        "P2: Soak Investment circles (3 per set)",
-        "P3: Bloodlust and burn — save defensive CDs",
-        "Tanks: swap on Golden Slam",
-      ],
-      phases: [
-        {
-          name: "Phase 1",
-          summary: "Manage Bribery debuffs — 100% to 60%",
-          abilities: [
-            {
-              name: "Bribery",
-              icon: "💰",
-              type: "Dispel",
-              roles: ["healer"],
-              description: "Random players get **Bribery** — mind-controlled for 8 seconds unless dispelled. Dispel drops a gold pile that must be avoided.",
-              whatToDo: "DISPEL BRIBERY — DROP GOLD PILES AT EDGES",
-              difficulties: ["normal", "heroic", "mythic"],
-            },
-          ],
-        },
-        {
-          name: "Phase 2",
-          summary: "Investment soaks — 60% to 30%",
-          abilities: [
-            {
-              name: "Investment",
-              icon: "📈",
-              type: "Soak",
-              roles: ["dps", "healer"],
-              description: "3 gold circles appear — each must be soaked by 2+ players or they explode for raid-wide damage.",
-              whatToDo: "SOAK ALL 3 CIRCLES — AT LEAST 2 PER CIRCLE",
-              difficulties: ["normal", "heroic", "mythic"],
-            },
-          ],
-        },
-        {
-          name: "Phase 3",
-          summary: "Burn phase from 30% — escalating damage",
-          abilities: [
-            {
-              name: "Golden Crescendo",
-              icon: "✨",
-              type: "Soft Enrage",
-              roles: ["everyone"],
-              description: "Pulsing raid damage that increases over time. Burn the boss before it overwhelms your healers.",
-              whatToDo: "BLOODLUST — ALL COOLDOWNS — BURN",
-              difficulties: ["normal", "heroic", "mythic"],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
 // EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════
 export const RAID_TIERS: RaidTier[] = [
   THE_VOIDSPIRE,
   THE_DREAMRIFT,
   MARCH_ON_QUELDANAS,
-  LIBERATION_OF_UNDERMINE,
 ];
 
 export function getCurrentTiers(): RaidTier[] {
