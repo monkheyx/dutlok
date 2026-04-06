@@ -16,7 +16,7 @@ interface NavLink {
 
 const links: NavLink[] = [
   { href: "/", label: "Dashboard", icon: Shield },
-  { href: "/strategies", label: "Raids", icon: BookOpen },
+  { href: "/strategies", label: "Strategies", icon: BookOpen },
   { href: "/mythic-plus", label: "M+", icon: KeyRound },
   {
     href: "/roster",
